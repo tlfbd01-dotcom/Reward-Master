@@ -9,6 +9,7 @@ import apiKeysRouter from "./apikeys";
 import networksRouter from "./networks";
 import leaderboardRouter from "./leaderboard";
 import adminRouter from "./admin";
+import wallsRouter from "./walls";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(apiKeysRouter);
 router.use(networksRouter);
 router.use(leaderboardRouter);
 router.use(adminRouter);
+router.use(wallsRouter);
 
 export default router;

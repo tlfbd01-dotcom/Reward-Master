@@ -12,7 +12,8 @@ import {
   Key, 
   LogOut,
   Gem,
-  ArrowLeft
+  ArrowLeft,
+  Layers
 } from "lucide-react";
 import { useLogout } from "@workspace/api-client-react";
 
@@ -39,6 +40,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { label: "Withdrawals", href: "/admin/withdrawals", icon: ArrowDownToLine },
     { label: "Conversions", href: "/admin/conversions", icon: History },
     { label: "Networks", href: "/admin/networks", icon: Network },
+    { label: "Offerwalls", href: "/admin/walls", icon: Layers },
     { label: "API Keys", href: "/admin/api-keys", icon: Key },
   ];
 

@@ -1,8 +1,30 @@
 import { Router, type IRouter } from "express";
-import { db, offersTable } from "@workspace/db";
-import { eq, sql, and, ilike } from "drizzle-orm";
+import { db, offersTable, offerClicksTable } from "@workspace/db";
+import { eq, sql, and } from "drizzle-orm";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+
+function serializeOffer(o: typeof offersTable.$inferSelect) {
+  return {
+    id: o.id,
+    name: o.name,
+    payout: parseFloat(o.payout),
+    network: o.network,
+    networkId: o.networkId,
+    status: o.status,
+    category: o.category,
+    device: o.device,
+    countries: o.countries,
+    description: o.description,
+    imageUrl: o.imageUrl,
+    offerUrl: o.offerUrl,
+    offerExternalId: o.offerExternalId,
+    events: o.events ?? null,
+    completions: o.completions,
+    createdAt: o.createdAt,
+  };
+}
 
 router.get("/offers", async (req, res): Promise<void> => {
   const { network, country, device, category, page: pageStr, limit: limitStr } = req.query as Record<string, string>;
@@ -29,14 +51,10 @@ router.get("/offers", async (req, res): Promise<void> => {
   });
 
   res.json({
-    data: data.map(o => ({
-      id: o.id, name: o.name, payout: parseFloat(o.payout), network: o.network,
-      networkId: o.networkId, status: o.status, category: o.category, device: o.device,
-      countries: o.countries, description: o.description, imageUrl: o.imageUrl,
-      offerUrl: o.offerUrl, completions: o.completions, createdAt: o.createdAt,
-    })),
+    data: data.map(serializeOffer),
     total: Number(countResult[0]?.count ?? 0),
-    page, limit,
+    page,
+    limit,
   });
 });
 
@@ -45,29 +63,44 @@ router.get("/offers/featured", async (_req, res): Promise<void> => {
     .where(eq(offersTable.status, "active"))
     .orderBy(sql`payout DESC`)
     .limit(8);
-
-  res.json(rows.map(o => ({
-    id: o.id, name: o.name, payout: parseFloat(o.payout), network: o.network,
-    networkId: o.networkId, status: o.status, category: o.category, device: o.device,
-    countries: o.countries, description: o.description, imageUrl: o.imageUrl,
-    offerUrl: o.offerUrl, completions: o.completions, createdAt: o.createdAt,
-  })));
+  res.json(rows.map(serializeOffer));
 });
 
 router.get("/offers/:id", async (req, res): Promise<void> => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(rawId, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const rows = await db.select().from(offersTable).where(eq(offersTable.id, id));
+  if (rows.length === 0) { res.status(404).json({ error: "Offer not found" }); return; }
+  res.json(serializeOffer(rows[0]));
+});
+
+// Click tracking — logs click and returns the redirect URL with USER_ID substituted
+router.get("/offers/:id/click", requireAuth, async (req, res): Promise<void> => {
+  const userId = (req as any).userId as number;
+  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(rawId, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
   const rows = await db.select().from(offersTable).where(eq(offersTable.id, id));
   if (rows.length === 0) { res.status(404).json({ error: "Offer not found" }); return; }
-  const o = rows[0];
-  res.json({
-    id: o.id, name: o.name, payout: parseFloat(o.payout), network: o.network,
-    networkId: o.networkId, status: o.status, category: o.category, device: o.device,
-    countries: o.countries, description: o.description, imageUrl: o.imageUrl,
-    offerUrl: o.offerUrl, completions: o.completions, createdAt: o.createdAt,
-  });
+
+  const offer = rows[0];
+  const ip = req.ip ?? req.socket.remoteAddress ?? null;
+
+  await db.insert(offerClicksTable).values({ userId, offerId: id, ip });
+
+  if (!offer.offerUrl) {
+    res.json({ url: null });
+    return;
+  }
+
+  const finalUrl = offer.offerUrl
+    .replace(/\{USER_ID\}/g, String(userId))
+    .replace(/\{user_id\}/g, String(userId))
+    .replace(/userId=\{[^}]+\}/g, `userId=${userId}`);
+
+  res.json({ url: finalUrl });
 });
 
 export default router;

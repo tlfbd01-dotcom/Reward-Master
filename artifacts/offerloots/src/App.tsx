@@ -34,6 +34,7 @@ import AdminWithdrawals from "@/pages/admin/withdrawals";
 import AdminConversions from "@/pages/admin/conversions";
 import AdminNetworks from "@/pages/admin/networks";
 import AdminApiKeys from "@/pages/admin/api-keys";
+import AdminWalls from "@/pages/admin/walls";
 
 function Router() {
   return (
@@ -65,6 +66,7 @@ function Router() {
       <Route path="/admin/conversions"><ProtectedRoute component={AdminConversions} adminOnly /></Route>
       <Route path="/admin/networks"><ProtectedRoute component={AdminNetworks} adminOnly /></Route>
       <Route path="/admin/api-keys"><ProtectedRoute component={AdminApiKeys} adminOnly /></Route>
+      <Route path="/admin/walls"><ProtectedRoute component={AdminWalls} adminOnly /></Route>
       
       {/* 404 */}
       <Route component={NotFound} />

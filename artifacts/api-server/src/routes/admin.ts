@@ -148,7 +148,8 @@ router.get("/admin/offers", requireAdmin, async (req, res): Promise<void> => {
       id: o.id, name: o.name, payout: parseFloat(o.payout), network: o.network,
       networkId: o.networkId, status: o.status, category: o.category, device: o.device,
       countries: o.countries, description: o.description, imageUrl: o.imageUrl,
-      offerUrl: o.offerUrl, completions: o.completions, createdAt: o.createdAt,
+      offerUrl: o.offerUrl, offerExternalId: o.offerExternalId, events: o.events ?? null,
+      completions: o.completions, createdAt: o.createdAt,
     })),
     total: Number(countResult[0]?.count ?? 0),
     page, limit,
@@ -156,7 +157,7 @@ router.get("/admin/offers", requireAdmin, async (req, res): Promise<void> => {
 });
 
 router.post("/admin/offers", requireAdmin, async (req, res): Promise<void> => {
-  const { name, payout, network, networkId, category, device, countries, description, imageUrl, offerUrl } = req.body;
+  const { name, payout, network, networkId, category, device, countries, description, imageUrl, offerUrl, offerExternalId, events } = req.body;
   if (!name || payout == null || !network) {
     res.status(400).json({ error: "name, payout, and network are required" });
     return;
@@ -166,13 +167,16 @@ router.post("/admin/offers", requireAdmin, async (req, res): Promise<void> => {
     networkId: networkId ?? null, category: category ?? "survey",
     device: device ?? "all", countries: countries ?? ["US"],
     description: description ?? "", imageUrl: imageUrl ?? null, offerUrl: offerUrl ?? null,
+    offerExternalId: offerExternalId ?? null,
+    events: Array.isArray(events) && events.length > 0 ? events : null,
   }).returning();
 
   res.status(201).json({
     id: o.id, name: o.name, payout: parseFloat(o.payout), network: o.network,
     networkId: o.networkId, status: o.status, category: o.category, device: o.device,
     countries: o.countries, description: o.description, imageUrl: o.imageUrl,
-    offerUrl: o.offerUrl, completions: o.completions, createdAt: o.createdAt,
+    offerUrl: o.offerUrl, offerExternalId: o.offerExternalId, events: o.events ?? null,
+    completions: o.completions, createdAt: o.createdAt,
   });
 });
 
@@ -181,7 +185,7 @@ router.patch("/admin/offers/:id", requireAdmin, async (req, res): Promise<void> 
   const id = parseInt(rawId, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
-  const { name, payout, status, category, device, countries, description, imageUrl, offerUrl } = req.body;
+  const { name, payout, status, category, device, countries, description, imageUrl, offerUrl, offerExternalId, events } = req.body;
   const updates: Partial<typeof offersTable.$inferInsert> = {};
   if (name) updates.name = name;
   if (payout !== undefined) updates.payout = parseFloat(payout).toFixed(2);
@@ -192,6 +196,8 @@ router.patch("/admin/offers/:id", requireAdmin, async (req, res): Promise<void> 
   if (description !== undefined) updates.description = description;
   if (imageUrl !== undefined) updates.imageUrl = imageUrl;
   if (offerUrl !== undefined) updates.offerUrl = offerUrl;
+  if (offerExternalId !== undefined) updates.offerExternalId = offerExternalId;
+  if (events !== undefined) updates.events = Array.isArray(events) && events.length > 0 ? events : null;
 
   const [o] = await db.update(offersTable).set(updates).where(eq(offersTable.id, id)).returning();
   if (!o) { res.status(404).json({ error: "Offer not found" }); return; }
@@ -200,7 +206,8 @@ router.patch("/admin/offers/:id", requireAdmin, async (req, res): Promise<void> 
     id: o.id, name: o.name, payout: parseFloat(o.payout), network: o.network,
     networkId: o.networkId, status: o.status, category: o.category, device: o.device,
     countries: o.countries, description: o.description, imageUrl: o.imageUrl,
-    offerUrl: o.offerUrl, completions: o.completions, createdAt: o.createdAt,
+    offerUrl: o.offerUrl, offerExternalId: o.offerExternalId, events: o.events ?? null,
+    completions: o.completions, createdAt: o.createdAt,
   });
 });
 

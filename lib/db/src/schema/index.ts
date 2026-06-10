@@ -5,3 +5,5 @@ export * from "./conversions";
 export * from "./transactions";
 export * from "./withdrawals";
 export * from "./apikeys";
+export * from "./walls";
+export * from "./offer_clicks";

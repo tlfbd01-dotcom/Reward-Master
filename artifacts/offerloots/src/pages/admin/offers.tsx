@@ -6,48 +6,33 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { Search, Plus, MoreVertical, Edit, Trash, PauseCircle, PlayCircle, Loader2 } from "lucide-react";
+import { Search, Plus, MoreVertical, Edit, Trash, PauseCircle, PlayCircle, Layers, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 
-const offerSchema = z.object({
-  name: z.string().min(1, "Name required"),
-  payout: z.coerce.number().min(0.01),
-  network: z.string().min(1, "Network required"),
-  category: z.string().min(1, "Category required"),
-  device: z.string(),
-  countries: z.string().transform(str => str.split(',').map(s => s.trim()).filter(Boolean)),
-  description: z.string(),
-  imageUrl: z.string().url().optional().or(z.literal("")),
-  offerUrl: z.string().url().optional().or(z.literal("")),
-});
+type EventRow = { name: string; payout: string; eventId: string };
 
-type OfferFormValues = z.infer<typeof offerSchema>;
+const EMPTY_FORM = {
+  name: "", payout: "1.00", network: "", category: "games", device: "all",
+  countries: "US", description: "", imageUrl: "", offerUrl: "", offerExternalId: "",
+};
 
 export default function AdminOffers() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
-  
   const [modalOpen, setModalOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<any>(null);
+  const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [events, setEvents] = useState<EventRow[]>([]);
 
   const queryParams: any = { page, limit: 20 };
   if (search) queryParams.search = search;
@@ -55,58 +40,78 @@ export default function AdminOffers() {
 
   const { data: offersData, isLoading } = useGetAdminOffers(queryParams);
   const { data: networksData } = useGetNetworks();
-  
   const createOffer = useCreateAdminOffer();
   const updateOffer = useUpdateAdminOffer();
   const deleteOffer = useDeleteAdminOffer();
 
-  const form = useForm<OfferFormValues>({
-    resolver: zodResolver(offerSchema),
-    defaultValues: {
-      name: "",
-      payout: 1,
-      network: "",
-      category: "games",
-      device: "all",
-      countries: "",
-      description: "",
-      imageUrl: "",
-      offerUrl: ""
-    }
-  });
-
   const openCreateModal = () => {
     setEditingOffer(null);
-    form.reset({
-      name: "", payout: 1, network: "", category: "games", device: "all", 
-      countries: "", description: "", imageUrl: "", offerUrl: ""
-    });
+    setForm({ ...EMPTY_FORM });
+    setEvents([]);
     setModalOpen(true);
   };
 
   const openEditModal = (offer: any) => {
     setEditingOffer(offer);
-    form.reset({
+    setForm({
       name: offer.name,
-      payout: offer.payout,
+      payout: String(offer.payout),
       network: offer.network,
       category: offer.category,
       device: offer.device,
       countries: offer.countries.join(", "),
       description: offer.description,
       imageUrl: offer.imageUrl || "",
-      offerUrl: offer.offerUrl || ""
+      offerUrl: offer.offerUrl || "",
+      offerExternalId: offer.offerExternalId || "",
     });
+    setEvents(
+      Array.isArray(offer.events)
+        ? offer.events.map((e: any) => ({ name: e.name, payout: String(e.payout), eventId: e.eventId || "" }))
+        : []
+    );
     setModalOpen(true);
   };
 
-  const onSubmit = async (data: any) => {
+  const addEvent = () => setEvents(ev => [...ev, { name: "", payout: "0.50", eventId: "" }]);
+  const removeEvent = (i: number) => setEvents(ev => ev.filter((_, idx) => idx !== i));
+  const updateEvent = (i: number, field: keyof EventRow, value: string) =>
+    setEvents(ev => ev.map((e, idx) => idx === i ? { ...e, [field]: value } : e));
+
+  const getEffectivePayout = () => {
+    if (events.length > 0) {
+      const sum = events.reduce((s, e) => s + (parseFloat(e.payout) || 0), 0);
+      return sum.toFixed(2);
+    }
+    return form.payout;
+  };
+
+  const handleSave = async () => {
+    if (!form.name || !form.network) {
+      toast({ variant: "destructive", title: "Name and Network are required" });
+      return;
+    }
+    const payload: any = {
+      name: form.name,
+      payout: parseFloat(getEffectivePayout()),
+      network: form.network,
+      category: form.category,
+      device: form.device,
+      countries: form.countries.split(",").map((s: string) => s.trim()).filter(Boolean),
+      description: form.description,
+      imageUrl: form.imageUrl || null,
+      offerUrl: form.offerUrl || null,
+      offerExternalId: form.offerExternalId || null,
+      events: events.length > 0
+        ? events.map(e => ({ name: e.name, payout: parseFloat(e.payout) || 0, eventId: e.eventId || undefined }))
+        : null,
+    };
     try {
       if (editingOffer) {
-        await updateOffer.mutateAsync({ id: editingOffer.id, data });
+        await updateOffer.mutateAsync({ id: editingOffer.id, data: payload });
         toast({ title: "Offer updated" });
       } else {
-        await createOffer.mutateAsync({ data });
+        await createOffer.mutateAsync({ data: payload });
         toast({ title: "Offer created" });
       }
       setModalOpen(false);
@@ -127,7 +132,7 @@ export default function AdminOffers() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this offer?")) {
+    if (confirm("Delete this offer?")) {
       try {
         await deleteOffer.mutateAsync({ id });
         toast({ title: "Offer deleted" });
@@ -156,18 +161,12 @@ export default function AdminOffers() {
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search offers..." 
-                  className="pl-9"
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                />
+                <Input placeholder="Search offers..." className="pl-9" value={search}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
               </div>
               <div className="w-full md:w-48">
                 <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
@@ -198,24 +197,29 @@ export default function AdminOffers() {
                   ) : offersData?.data?.length === 0 ? (
                     <tr><td colSpan={5} className="text-center py-8">No offers found.</td></tr>
                   ) : (
-                    offersData?.data.map((offer) => (
+                    offersData?.data.map((offer: any) => (
                       <tr key={offer.id} className="border-b last:border-0 hover:bg-muted/20">
                         <td className="px-6 py-4">
-                          <div className="font-bold line-clamp-1">{offer.name}</div>
+                          <div className="font-bold line-clamp-1 flex items-center gap-2">
+                            {offer.name}
+                            {offer.events?.length > 0 && (
+                              <Badge variant="outline" className="text-[10px] border-primary/50 text-primary gap-1 px-1.5">
+                                <Layers className="w-2.5 h-2.5" /> {offer.events.length}
+                              </Badge>
+                            )}
+                          </div>
                           <div className="text-xs text-muted-foreground flex gap-2">
                             <span className="capitalize">{offer.device}</span>
                             <span>•</span>
                             <span className="capitalize">{offer.category}</span>
+                            {offer.offerExternalId && <span>• ID: {offer.offerExternalId}</span>}
                           </div>
                         </td>
+                        <td className="px-6 py-4"><Badge variant="secondary">{offer.network}</Badge></td>
+                        <td className="px-6 py-4 text-right font-mono font-bold text-primary">${offer.payout.toFixed(2)}</td>
                         <td className="px-6 py-4">
-                          <Badge variant="secondary">{offer.network}</Badge>
-                        </td>
-                        <td className="px-6 py-4 text-right font-mono font-bold text-primary">
-                          ${offer.payout.toFixed(2)}
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge variant={offer.status === 'paused' ? 'secondary' : 'default'} className={offer.status === 'active' ? 'bg-green-500 hover:bg-green-600' : ''}>
+                          <Badge variant={offer.status === 'paused' ? 'secondary' : 'default'}
+                            className={offer.status === 'active' ? 'bg-green-500 hover:bg-green-600' : ''}>
                             {offer.status}
                           </Badge>
                         </td>
@@ -227,6 +231,7 @@ export default function AdminOffers() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
                               <DropdownMenuItem onClick={() => openEditModal(offer)}>
                                 <Edit className="mr-2 h-4 w-4" /> Edit
                               </DropdownMenuItem>
@@ -254,71 +259,159 @@ export default function AdminOffers() {
             </div>
           </CardContent>
         </Card>
+
+        {offersData && offersData.total > offersData.limit && (
+          <div className="flex justify-center gap-2">
+            <Button variant="outline" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
+            <div className="flex items-center px-4 font-medium">Page {page} of {Math.ceil(offersData.total / offersData.limit)}</div>
+            <Button variant="outline" disabled={page >= Math.ceil(offersData.total / offersData.limit)} onClick={() => setPage(p => p + 1)}>Next</Button>
+          </div>
+        )}
       </div>
 
+      {/* Create / Edit Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingOffer ? 'Edit Offer' : 'Create Offer'}</DialogTitle>
+            <DialogTitle>{editingOffer ? "Edit Offer" : "Create Offer"}</DialogTitle>
           </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="name" render={({ field }) => (
-                  <FormItem className="col-span-2"><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="payout" render={({ field }) => (
-                  <FormItem><FormLabel>Payout ($)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="network" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Network</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Select network" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {networksData?.map(n => <SelectItem key={n.id} value={n.name}>{n.name}</SelectItem>)}
-                        <SelectItem value="manual">Manual/Custom</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="category" render={({ field }) => (
-                  <FormItem><FormLabel>Category</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="device" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Device</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="mobile">Mobile</SelectItem>
-                        <SelectItem value="desktop">Desktop</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="countries" render={({ field }) => (
-                  <FormItem className="col-span-2"><FormLabel>Countries (comma separated, empty for Global)</FormLabel><FormControl><Input placeholder="US, UK, CA" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="imageUrl" render={({ field }) => (
-                  <FormItem className="col-span-2"><FormLabel>Image URL (optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="offerUrl" render={({ field }) => (
-                  <FormItem className="col-span-2"><FormLabel>Offer Redirect URL (optional)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="description" render={({ field }) => (
-                  <FormItem className="col-span-2"><FormLabel>Description / Requirements</FormLabel><FormControl><Textarea rows={4} {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
+          <div className="space-y-4 py-2">
+            {/* Basic Fields */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2 space-y-1.5">
+                <Label>Name *</Label>
+                <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Offer name" />
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
-                <Button type="submit" disabled={createOffer.isPending || updateOffer.isPending}>Save Offer</Button>
-              </DialogFooter>
-            </form>
-          </Form>
+              <div className="space-y-1.5">
+                <Label>Network *</Label>
+                <Select value={form.network} onValueChange={v => setForm(f => ({ ...f, network: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Select network" /></SelectTrigger>
+                  <SelectContent>
+                    {networksData?.map((n: any) => <SelectItem key={n.id} value={n.name}>{n.name}</SelectItem>)}
+                    <SelectItem value="manual">Manual/Custom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Category</Label>
+                <Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} placeholder="games, survey..." />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Device</Label>
+                <Select value={form.device} onValueChange={v => setForm(f => ({ ...f, device: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="mobile">Mobile</SelectItem>
+                    <SelectItem value="desktop">Desktop</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Countries (comma-separated)</Label>
+                <Input value={form.countries} onChange={e => setForm(f => ({ ...f, countries: e.target.value }))} placeholder="US, UK, CA" />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Multi-Event Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-semibold">Completion Events</Label>
+                  <p className="text-xs text-muted-foreground">Add multiple payout milestones for this offer.</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={addEvent} className="gap-1">
+                  <Plus className="w-3.5 h-3.5" /> Add Event
+                </Button>
+              </div>
+
+              {events.length === 0 ? (
+                <div className="space-y-1.5">
+                  <Label>Payout ($)</Label>
+                  <Input type="number" step="0.01" min="0.01" value={form.payout}
+                    onChange={e => setForm(f => ({ ...f, payout: e.target.value }))} placeholder="1.00" />
+                  <p className="text-xs text-muted-foreground">Single payout. Add events above for multi-step rewards.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {events.map((ev, i) => (
+                    <div key={i} className="grid grid-cols-[1fr_5rem_5rem_2rem] gap-2 items-end">
+                      <div className="space-y-1">
+                        {i === 0 && <Label className="text-xs">Event Name</Label>}
+                        <Input placeholder="e.g. Reach Level 5" value={ev.name}
+                          onChange={e => updateEvent(i, "name", e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        {i === 0 && <Label className="text-xs">Payout ($)</Label>}
+                        <Input type="number" step="0.01" min="0" placeholder="0.50" value={ev.payout}
+                          onChange={e => updateEvent(i, "payout", e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        {i === 0 && <Label className="text-xs">Event ID</Label>}
+                        <Input placeholder="level5" value={ev.eventId}
+                          onChange={e => updateEvent(i, "eventId", e.target.value)} />
+                      </div>
+                      <Button type="button" variant="ghost" size="icon" onClick={() => removeEvent(i)}
+                        className={i === 0 ? "mt-5" : ""}>
+                        <X className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-xs text-muted-foreground bg-muted/30 rounded px-3 py-2">
+                    <span>{events.length} event{events.length !== 1 ? "s" : ""}</span>
+                    <span className="font-bold text-primary">Total: ${getEffectivePayout()}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Click Tracking */}
+            <div className="space-y-3">
+              <div>
+                <Label className="text-base font-semibold">Click Tracking</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Use <code className="bg-muted px-1 rounded">&#123;USER_ID&#125;</code> in the URL — it will be replaced with the user's account ID.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2 space-y-1.5">
+                  <Label>Offer URL Template</Label>
+                  <Input value={form.offerUrl}
+                    onChange={e => setForm(f => ({ ...f, offerUrl: e.target.value }))}
+                    placeholder="https://api.gemiwall.com/api/offers/click?offerId=xxx&userId={USER_ID}&placementId=yyy" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>External Offer ID</Label>
+                  <Input value={form.offerExternalId}
+                    onChange={e => setForm(f => ({ ...f, offerExternalId: e.target.value }))}
+                    placeholder="cFiWFEJz" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Image URL (optional)</Label>
+                  <Input value={form.imageUrl}
+                    onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))}
+                    placeholder="https://..." />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-1.5">
+              <Label>Description / Requirements</Label>
+              <Textarea rows={3} value={form.description}
+                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="Describe what the user needs to do..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={createOffer.isPending || updateOffer.isPending}>
+              {editingOffer ? "Save Changes" : "Create Offer"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </AdminLayout>

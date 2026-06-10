@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, decimal, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, decimal, integer, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -15,6 +15,8 @@ export const offersTable = pgTable("offers", {
   countries: text("countries").array().notNull().default(["US"]),
   imageUrl: text("image_url"),
   offerUrl: text("offer_url"),
+  offerExternalId: text("offer_external_id"),
+  events: json("events").$type<Array<{ name: string; payout: number; eventId?: string }>>(),
   completions: integer("completions").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
