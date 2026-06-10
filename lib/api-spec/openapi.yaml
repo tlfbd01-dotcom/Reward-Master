@@ -1,22 +1,29 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: OfferLoots GPT Rewards Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: auth
+  - name: user
+  - name: offers
+  - name: conversions
+  - name: withdrawals
+  - name: admin
+  - name: networks
+  - name: apikeys
+  - name: postback
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +31,804 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # Auth
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  /auth/forgot-password:
+    post:
+      operationId: forgotPassword
+      tags: [auth]
+      summary: Request password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordInput"
+      responses:
+        "200":
+          description: Reset email sent
+
+  /auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [auth]
+      summary: Reset password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordInput"
+      responses:
+        "200":
+          description: Password reset successful
+
+  # User
+  /user/profile:
+    get:
+      operationId: getUserProfile
+      tags: [user]
+      summary: Get user profile
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+    patch:
+      operationId: updateUserProfile
+      tags: [user]
+      summary: Update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /user/dashboard:
+    get:
+      operationId: getUserDashboard
+      tags: [user]
+      summary: Get user dashboard stats and activity
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDashboard"
+
+  /user/transactions:
+    get:
+      operationId: getUserTransactions
+      tags: [user]
+      summary: Get user transaction history
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedTransactions"
+
+  /user/referrals:
+    get:
+      operationId: getUserReferrals
+      tags: [user]
+      summary: Get user referrals
+      responses:
+        "200":
+          description: Referrals list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Referral"
+
+  /user/conversions:
+    get:
+      operationId: getUserConversions
+      tags: [user]
+      summary: Get user's completed conversions
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Conversions list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedConversions"
+
+  /user/balance:
+    get:
+      operationId: getUserBalance
+      tags: [user]
+      summary: Get user balance
+      responses:
+        "200":
+          description: Balance info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserBalance"
+
+  # Offers
+  /offers:
+    get:
+      operationId: getOffers
+      tags: [offers]
+      summary: List available offers
+      parameters:
+        - in: query
+          name: network
+          schema:
+            type: string
+        - in: query
+          name: country
+          schema:
+            type: string
+        - in: query
+          name: device
+          schema:
+            type: string
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Offers list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedOffers"
+
+  /offers/{id}:
+    get:
+      operationId: getOffer
+      tags: [offers]
+      summary: Get single offer
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Offer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+        "404":
+          description: Not found
+
+  /offers/featured:
+    get:
+      operationId: getFeaturedOffers
+      tags: [offers]
+      summary: Get featured/high-paying offers
+      responses:
+        "200":
+          description: Featured offers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Offer"
+
+  # Postback
+  /postback:
+    get:
+      operationId: handlePostback
+      tags: [postback]
+      summary: Process S2S postback from offerwall network
+      parameters:
+        - in: query
+          name: network
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: subid
+          schema:
+            type: string
+        - in: query
+          name: amount
+          schema:
+            type: number
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: txid
+          schema:
+            type: string
+        - in: query
+          name: offer_id
+          schema:
+            type: string
+        - in: query
+          name: offer_name
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad request
+
+  # Withdrawals
+  /withdrawals:
+    get:
+      operationId: getWithdrawals
+      tags: [withdrawals]
+      summary: Get user withdrawal history
+      responses:
+        "200":
+          description: Withdrawals list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Withdrawal"
+    post:
+      operationId: createWithdrawal
+      tags: [withdrawals]
+      summary: Request a withdrawal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawalInput"
+      responses:
+        "201":
+          description: Withdrawal requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Withdrawal"
+        "400":
+          description: Insufficient balance or validation error
+
+  /withdrawals/{id}:
+    get:
+      operationId: getWithdrawal
+      tags: [withdrawals]
+      summary: Get withdrawal by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Withdrawal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Withdrawal"
+
+  # API Keys (user)
+  /apikeys:
+    get:
+      operationId: getApiKeys
+      tags: [apikeys]
+      summary: List user API keys
+      responses:
+        "200":
+          description: API keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApiKey"
+    post:
+      operationId: createApiKey
+      tags: [apikeys]
+      summary: Generate a new API key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiKeyInput"
+      responses:
+        "201":
+          description: API key created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKey"
+
+  /apikeys/{id}:
+    delete:
+      operationId: deleteApiKey
+      tags: [apikeys]
+      summary: Delete an API key
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Networks
+  /networks:
+    get:
+      operationId: getNetworks
+      tags: [networks]
+      summary: Get offerwall networks
+      responses:
+        "200":
+          description: Networks list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Network"
+
+  # Leaderboard
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [user]
+      summary: Get top earners leaderboard
+      responses:
+        "200":
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+  # Admin routes
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Admin dashboard stats
+      responses:
+        "200":
+          description: Admin stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/users:
+    get:
+      operationId: getAdminUsers
+      tags: [admin]
+      summary: List all users (admin)
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedUsers"
+
+  /admin/users/{id}:
+    get:
+      operationId: getAdminUser
+      tags: [admin]
+      summary: Get user detail (admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserDetail"
+    patch:
+      operationId: updateAdminUser
+      tags: [admin]
+      summary: Update user (admin) - ban/unban, edit balance/points
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserDetail"
+
+  /admin/offers:
+    get:
+      operationId: getAdminOffers
+      tags: [admin]
+      summary: List all offers (admin)
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Offers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedAdminOffers"
+    post:
+      operationId: createAdminOffer
+      tags: [admin]
+      summary: Create offer (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfferInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+
+  /admin/offers/{id}:
+    patch:
+      operationId: updateAdminOffer
+      tags: [admin]
+      summary: Update offer (admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfferUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+    delete:
+      operationId: deleteAdminOffer
+      tags: [admin]
+      summary: Delete offer (admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /admin/withdrawals:
+    get:
+      operationId: getAdminWithdrawals
+      tags: [admin]
+      summary: List all withdrawals (admin)
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Withdrawals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedWithdrawals"
+
+  /admin/withdrawals/{id}:
+    patch:
+      operationId: updateAdminWithdrawal
+      tags: [admin]
+      summary: Approve/reject withdrawal (admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawalStatusUpdate"
+      responses:
+        "200":
+          description: Updated withdrawal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Withdrawal"
+
+  /admin/conversions:
+    get:
+      operationId: getAdminConversions
+      tags: [admin]
+      summary: List all conversions (admin)
+      parameters:
+        - in: query
+          name: network
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Conversions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedAdminConversions"
+
+  /admin/activity:
+    get:
+      operationId: getAdminActivity
+      tags: [admin]
+      summary: Recent platform activity feed
+      responses:
+        "200":
+          description: Activity feed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /admin/revenue:
+    get:
+      operationId: getAdminRevenue
+      tags: [admin]
+      summary: Revenue chart data by period
+      parameters:
+        - in: query
+          name: period
+          schema:
+            type: string
+            enum: [7d, 30d, 90d]
+      responses:
+        "200":
+          description: Revenue data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RevenuePoint"
+
+  /admin/networks:
+    get:
+      operationId: getAdminNetworks
+      tags: [admin]
+      summary: Get all offerwall networks (admin)
+      responses:
+        "200":
+          description: Networks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Network"
+    post:
+      operationId: createAdminNetwork
+      tags: [admin]
+      summary: Create/configure a network (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NetworkInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Network"
+
+  /admin/networks/{id}:
+    patch:
+      operationId: updateAdminNetwork
+      tags: [admin]
+      summary: Update network config (admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NetworkUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Network"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +836,723 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    # Auth
+    RegisterInput:
+      type: object
+      required: [username, email, password]
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        referralCode:
+          type: ["string", "null"]
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    ForgotPasswordInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+
+    ResetPasswordInput:
+      type: object
+      required: [token, password]
+      properties:
+        token:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user, token]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+
+    User:
+      type: object
+      required: [id, username, email, role, status, balance, points, rank, referralCode, createdAt]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+        status:
+          type: string
+          enum: [active, banned, pending]
+        balance:
+          type: number
+        points:
+          type: integer
+        rank:
+          type: string
+        referralCode:
+          type: string
+        avatar:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    UserProfile:
+      type: object
+      required: [id, username, email, balance, points, rank, referralCode, totalEarned, totalWithdrawn, totalReferrals, createdAt]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        balance:
+          type: number
+        points:
+          type: integer
+        rank:
+          type: string
+        rankProgress:
+          type: number
+        nextRank:
+          type: ["string", "null"]
+        referralCode:
+          type: string
+        totalEarned:
+          type: number
+        totalWithdrawn:
+          type: number
+        totalReferrals:
+          type: integer
+        avatar:
+          type: ["string", "null"]
+        country:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+        country:
+          type: string
+        avatar:
+          type: string
+
+    UserDashboard:
+      type: object
+      required: [balance, points, totalEarned, todayEarned, totalConversions, pendingWithdrawals, rank, recentConversions, recentTransactions]
+      properties:
+        balance:
+          type: number
+        points:
+          type: integer
+        totalEarned:
+          type: number
+        todayEarned:
+          type: number
+        totalConversions:
+          type: integer
+        pendingWithdrawals:
+          type: number
+        rank:
+          type: string
+        rankProgress:
+          type: number
+        recentConversions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Conversion"
+        recentTransactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+
+    UserBalance:
+      type: object
+      required: [balance, points, pendingBalance]
+      properties:
+        balance:
+          type: number
+        points:
+          type: integer
+        pendingBalance:
+          type: number
+
+    Referral:
+      type: object
+      required: [id, username, createdAt, totalEarnings, status]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        createdAt:
+          type: string
+        totalEarnings:
+          type: number
+        status:
+          type: string
+
+    # Offers
+    Offer:
+      type: object
+      required: [id, name, payout, network, status, category, device, countries, description, imageUrl]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        payout:
+          type: number
+        network:
+          type: string
+        networkId:
+          type: ["integer", "null"]
+        status:
+          type: string
+          enum: [active, paused, deleted]
+        category:
+          type: string
+        device:
+          type: string
+          enum: [all, mobile, desktop]
+        countries:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        offerUrl:
+          type: ["string", "null"]
+        completions:
+          type: integer
+        createdAt:
+          type: string
+
+    OfferInput:
+      type: object
+      required: [name, payout, network, category, device, countries, description]
+      properties:
+        name:
+          type: string
+        payout:
+          type: number
+        network:
+          type: string
+        networkId:
+          type: ["integer", "null"]
+        category:
+          type: string
+        device:
+          type: string
+        countries:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+        offerUrl:
+          type: string
+
+    OfferUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        payout:
+          type: number
+        status:
+          type: string
+        category:
+          type: string
+        device:
+          type: string
+        countries:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+        offerUrl:
+          type: string
+
+    PaginatedOffers:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Offer"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    PaginatedAdminOffers:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Offer"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # Conversions
+    Conversion:
+      type: object
+      required: [id, userId, offerId, offerName, network, amount, status, txid, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        offerId:
+          type: ["integer", "null"]
+        offerName:
+          type: string
+        network:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        txid:
+          type: string
+        ip:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    PaginatedConversions:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Conversion"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    PaginatedAdminConversions:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminConversion"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    AdminConversion:
+      type: object
+      required: [id, userId, username, offerId, offerName, network, amount, status, txid, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        username:
+          type: string
+        offerId:
+          type: ["integer", "null"]
+        offerName:
+          type: string
+        network:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        txid:
+          type: string
+        ip:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    # Transactions
+    Transaction:
+      type: object
+      required: [id, userId, type, amount, description, status, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        type:
+          type: string
+          enum: [credit, debit, referral_bonus, withdrawal]
+        amount:
+          type: number
+        description:
+          type: string
+        status:
+          type: string
+        referenceId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+
+    PaginatedTransactions:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # Withdrawals
+    Withdrawal:
+      type: object
+      required: [id, userId, amount, method, accountInfo, status, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        amount:
+          type: number
+        method:
+          type: string
+          enum: [paypal, payoneer, wise, crypto_btc, crypto_eth, crypto_usdt, bkash, nagad, manual]
+        accountInfo:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected, processing]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    WithdrawalInput:
+      type: object
+      required: [amount, method, accountInfo]
+      properties:
+        amount:
+          type: number
+        method:
+          type: string
+        accountInfo:
+          type: string
+
+    WithdrawalStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [approved, rejected, processing]
+        notes:
+          type: string
+
+    PaginatedWithdrawals:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Withdrawal"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # API Keys
+    ApiKey:
+      type: object
+      required: [id, name, key, isActive, usageCount, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        key:
+          type: string
+        isActive:
+          type: boolean
+        usageCount:
+          type: integer
+        lastUsedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    ApiKeyInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    # Networks
+    Network:
+      type: object
+      required: [id, name, slug, isActive, postbackUrl, totalConversions, totalRevenue]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        postbackUrl:
+          type: string
+        secretKey:
+          type: ["string", "null"]
+        totalConversions:
+          type: integer
+        totalRevenue:
+          type: number
+
+    NetworkInput:
+      type: object
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        logoUrl:
+          type: string
+        secretKey:
+          type: string
+        isActive:
+          type: boolean
+
+    NetworkUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        logoUrl:
+          type: string
+        secretKey:
+          type: string
+        isActive:
+          type: boolean
+
+    # Admin
+    AdminStats:
+      type: object
+      required: [totalUsers, totalRevenue, totalWithdrawals, totalConversions, activeOffers, pendingWithdrawals, todaySignups, todayConversions, todayRevenue]
+      properties:
+        totalUsers:
+          type: integer
+        totalRevenue:
+          type: number
+        totalWithdrawals:
+          type: number
+        totalConversions:
+          type: integer
+        activeOffers:
+          type: integer
+        pendingWithdrawals:
+          type: integer
+        todaySignups:
+          type: integer
+        todayConversions:
+          type: integer
+        todayRevenue:
+          type: number
+
+    PaginatedUsers:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUserSummary"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    AdminUserSummary:
+      type: object
+      required: [id, username, email, status, role, balance, points, rank, totalEarned, totalConversions, createdAt]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        status:
+          type: string
+        role:
+          type: string
+        balance:
+          type: number
+        points:
+          type: integer
+        rank:
+          type: string
+        totalEarned:
+          type: number
+        totalConversions:
+          type: integer
+        createdAt:
+          type: string
+
+    AdminUserDetail:
+      type: object
+      required: [id, username, email, status, role, balance, points, rank, totalEarned, totalWithdrawn, totalConversions, referralCode, createdAt]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        status:
+          type: string
+        role:
+          type: string
+        balance:
+          type: number
+        points:
+          type: integer
+        rank:
+          type: string
+        totalEarned:
+          type: number
+        totalWithdrawn:
+          type: number
+        totalConversions:
+          type: integer
+        referralCode:
+          type: string
+        avatar:
+          type: ["string", "null"]
+        country:
+          type: ["string", "null"]
+        lastIp:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    AdminUserUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [active, banned]
+        balance:
+          type: number
+        points:
+          type: integer
+        role:
+          type: string
+          enum: [user, admin]
+
+    ActivityItem:
+      type: object
+      required: [id, type, description, amount, username, createdAt]
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [conversion, withdrawal, registration, referral]
+        description:
+          type: string
+        amount:
+          type: ["number", "null"]
+        username:
+          type: string
+        createdAt:
+          type: string
+
+    RevenuePoint:
+      type: object
+      required: [date, revenue, conversions]
+      properties:
+        date:
+          type: string
+        revenue:
+          type: number
+        conversions:
+          type: integer
+
+    LeaderboardEntry:
+      type: object
+      required: [rank, userId, username, totalEarned, avatar]
+      properties:
+        rank:
+          type: integer
+        userId:
+          type: integer
+        username:
+          type: string
+        totalEarned:
+          type: number
+        avatar:
+          type: ["string", "null"]

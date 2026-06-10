@@ -1,0 +1,1 @@
+- [OfferLoots Architecture](offerloots-arch.md) — JWT auth, postback S2S, rank tiers, withdrawal flow, and key data shape mismatches to watch.

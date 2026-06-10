@@ -1,0 +1,154 @@
+Build a complete GPT (Get-To-Paid) rewards platform called "OfferLoots".
+
+TECH STACK:
+- Laravel 12 + PHP 8.3
+- MySQL Database
+- Bootstrap 5 Admin UI
+- REST API Support
+- Secure Authentication
+- Mobile Responsive Design
+
+MAIN FEATURES:
+
+1. USER SYSTEM
+- Registration & Login
+- Email Verification
+- Forgot Password
+- User Dashboard
+- Profile Settings
+- Referral System
+- Referral Earnings Tracking
+- User Rank System
+
+2. OFFERWALL INTEGRATIONS
+- OfferToro
+- AdGate Media
+- CPX Research
+- Lootably
+- RevenueWall
+- AdGem
+- Monlix
+- Ayet Studios
+
+3. POSTBACK SYSTEM
+- Global Postback URL
+- Network Specific Postback URLs
+- S2S Conversion Tracking
+- Automatic User Crediting
+- Duplicate Conversion Protection
+- Conversion Logs
+- Postback Testing Tool
+- Click Tracking
+- Transaction History
+
+Example:
+https://domain.com/postback/network?subid={user_id}&amount={payout}&status=approved
+
+4. ADMIN PANEL
+- Modern Dashboard
+- Total Revenue
+- Total Users
+- Total Withdrawals
+- Total Conversions
+- Recent Activity Feed
+
+5. USER MANAGEMENT
+- View Users
+- Ban/Unban Users
+- Edit User Balance
+- Edit Points
+- User Search
+- User Activity Logs
+
+6. OFFER MANAGEMENT
+- Create Offer
+- Edit Offer
+- Pause Offer
+- Delete Offer
+- Category Management
+- Geo Targeting
+- Device Targeting
+
+7. API MANAGEMENT
+- Generate API Keys
+- API Access Control
+- API Usage Logs
+- Rate Limiting
+- API Documentation
+
+8. OFFER API
+Create REST API Endpoints:
+
+GET /api/offers
+GET /api/offers/{id}
+POST /api/conversion
+GET /api/user/balance
+GET /api/user/conversions
+
+API Response:
+{
+  "offer_id": 1001,
+  "offer_name": "Survey Offer",
+  "payout": 2.50,
+  "country": "US",
+  "device": "Mobile"
+}
+
+9. WITHDRAWAL SYSTEM
+- PayPal
+- Payoneer
+- Wise
+- Crypto
+- bKash
+- Nagad
+- Manual Payment Approval
+- Withdrawal History
+
+10. FINANCE
+- Revenue Tracking
+- Profit Calculation
+- Network Earnings
+- User Payout Reports
+- Export CSV
+
+11. SECURITY
+- CSRF Protection
+- XSS Protection
+- SQL Injection Protection
+- 2FA Admin Login
+- IP Logging
+- Audit Logs
+- Cloudflare Friendly
+
+12. API DOCUMENTATION PAGE
+- Swagger/OpenAPI
+- Example Requests
+- Example Responses
+- API Key Authentication
+
+13. NOTIFICATION SYSTEM
+- Email Notifications
+- Admin Notifications
+- New Conversion Alerts
+- Withdrawal Alerts
+
+14. REPORTING
+- Conversion Reports
+- Offer Performance
+- Country Reports
+- Revenue Reports
+- Export PDF/CSV
+
+15. DATABASE
+Create all migrations, models, controllers, middleware, routes, API routes, admin panel pages, and seeders.
+
+UI STYLE:
+- Professional GPT Site
+- Dark & Light Mode
+- Modern Cards
+- Animated Statistics
+- Clean Navigation
+- Similar to CashJungle, Freecash, and CashRaid
+
+OUTPUT:
+Generate complete production-ready source code with database schema, API documentation, admin panel, postback system, and installation guide.

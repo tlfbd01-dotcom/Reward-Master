@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "OfferLoots"
+version = "1.0.0"
+id = "artifacts/offerloots"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23516
+
+[services.development]
+run = "pnpm --filter @workspace/offerloots run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/offerloots", "run", "build" ]
+publicDir = "artifacts/offerloots/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23516"
+BASE_PATH = "/"
