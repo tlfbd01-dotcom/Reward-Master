@@ -60,7 +60,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <Sidebar className="border-r border-border bg-card">
           <SidebarHeader className="p-4 border-b">
             <Link href="/" className="flex items-center">
-              <img src={logoSrc} alt="OfferLoots" className="h-9 w-auto" />
+              <img src={logoSrc} alt="OfferLoots" className="h-14 w-auto" />
             </Link>
           </SidebarHeader>
           <SidebarContent>

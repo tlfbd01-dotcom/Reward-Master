@@ -53,7 +53,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <Sidebar className="border-r border-border bg-card">
           <SidebarHeader className="p-4 border-b">
             <Link href="/" className="flex items-center gap-2">
-              <img src={logoSrc} alt="OfferLoots" className="h-9 w-auto" />
+              <img src={logoSrc} alt="OfferLoots" className="h-14 w-auto" />
               <span className="font-display font-bold text-sm text-muted-foreground">Admin</span>
             </Link>
           </SidebarHeader>

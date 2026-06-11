@@ -34,9 +34,9 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background/90 selection:bg-primary/30">
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="container mx-auto px-4 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center">
-            <img src={logoSrc} alt="OfferLoots" className="h-10 w-auto" />
+            <img src={logoSrc} alt="OfferLoots" className="h-20 w-auto" />
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
@@ -124,7 +124,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
               <Link href="/" className="flex items-center mb-4">
-                <img src={logoSrc} alt="OfferLoots" className="h-10 w-auto" />
+                <img src={logoSrc} alt="OfferLoots" className="h-16 w-auto" />
               </Link>
               <p className="text-muted-foreground text-sm max-w-sm">
                 The highest-paying rewards platform. Complete surveys, play games, and watch videos to earn real cash. Fast withdrawals via PayPal, Crypto, and more.

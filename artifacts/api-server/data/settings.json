@@ -1,0 +1,11 @@
+{
+  "mail": {
+    "smtpHost": "smtp.hostinger.com",
+    "smtpPort": 465,
+    "smtpUser": "no-reply@coinaxio.com",
+    "smtpPass": "L0?2?eDo^",
+    "fromName": "OfferLoots",
+    "fromEmail": "no-reply@coinaxio.com",
+    "requireEmailVerification": true
+  }
+}
