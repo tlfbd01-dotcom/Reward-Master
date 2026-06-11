@@ -39,6 +39,20 @@ export function computeRank(totalEarned: number): string {
   return "Bronze";
 }
 
+export function signVerificationToken(userId: number): string {
+  return jwt.sign({ userId, purpose: "email_verification" }, JWT_SECRET, { expiresIn: "24h" });
+}
+
+export function verifyVerificationToken(token: string): { userId: number } | null {
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as any;
+    if (payload.purpose !== "email_verification") return null;
+    return { userId: payload.userId };
+  } catch {
+    return null;
+  }
+}
+
 export function computeRankProgress(totalEarned: number): number {
   const thresholds = [0, 50, 200, 500, 1000];
   for (let i = thresholds.length - 2; i >= 0; i--) {

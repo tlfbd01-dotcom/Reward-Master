@@ -58,6 +58,19 @@ router.get("/offers", async (req, res): Promise<void> => {
   });
 });
 
+router.get("/offers/countries", async (_req, res): Promise<void> => {
+  const result = await db.execute(sql`
+    SELECT DISTINCT unnest(countries) AS country
+    FROM offers
+    WHERE status = 'active'
+    ORDER BY country
+  `);
+  const codes = (result.rows as { country: string }[])
+    .map(r => r.country)
+    .filter(c => c && c !== "ALL" && c.length === 2);
+  res.json(codes);
+});
+
 router.get("/offers/featured", async (_req, res): Promise<void> => {
   const rows = await db.select().from(offersTable)
     .where(eq(offersTable.status, "active"))

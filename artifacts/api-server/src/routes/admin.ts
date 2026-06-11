@@ -443,4 +443,51 @@ router.post("/admin/networks/:id/sync", requireAdmin, async (req, res): Promise<
   }
 });
 
+// ─── Seed 1000 demo users ────────────────────────────────────────────────────
+
+router.post("/admin/seed-users", requireAdmin, async (_req, res): Promise<void> => {
+  const { hashPassword, generateReferralCode, computeRank } = await import("../lib/auth");
+  const FIRST = ["Alex", "Jordan", "Sam", "Taylor", "Morgan", "Casey", "Riley", "Drew", "Jamie", "Blake",
+    "Quinn", "Avery", "Sage", "Hayden", "Parker", "Hunter", "Logan", "Dylan", "Cameron", "Reese"];
+  const LAST = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Wilson",
+    "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Young", "King"];
+  const COUNTRIES = ["US", "GB", "CA", "AU", "DE", "IN", "BR", "PH", "NG", "MX", "ID", "ZA", "PK", "TR", "FR"];
+  const passwordHash = await hashPassword("user123");
+
+  const users: typeof usersTable.$inferInsert[] = [];
+  for (let i = 0; i < 1000; i++) {
+    const first = FIRST[Math.floor(Math.random() * FIRST.length)];
+    const last = LAST[Math.floor(Math.random() * LAST.length)];
+    const suffix = Math.floor(Math.random() * 9999);
+    const username = `${first}${last}${suffix}`.toLowerCase();
+    const email = `${username}@demo.offerloots.com`;
+    const totalEarned = parseFloat((Math.random() * 250).toFixed(2));
+    const withdrawn = parseFloat((Math.random() * totalEarned * 0.6).toFixed(2));
+    const balance = parseFloat(Math.max(0, totalEarned - withdrawn).toFixed(2));
+    users.push({
+      username,
+      email,
+      passwordHash,
+      referralCode: generateReferralCode() + i,
+      country: COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)],
+      balance: balance.toFixed(2),
+      totalEarned: totalEarned.toFixed(2),
+      totalWithdrawn: withdrawn.toFixed(2),
+      points: Math.floor(Math.random() * 5000),
+      rank: computeRank(totalEarned),
+      emailVerified: Math.random() > 0.7,
+    });
+  }
+
+  let inserted = 0;
+  const BATCH = 100;
+  for (let i = 0; i < users.length; i += BATCH) {
+    const batch = users.slice(i, i + BATCH);
+    const result = await db.insert(usersTable).values(batch).onConflictDoNothing().returning({ id: usersTable.id });
+    inserted += result.length;
+  }
+
+  res.json({ ok: true, inserted, attempted: users.length });
+});
+
 export default router;

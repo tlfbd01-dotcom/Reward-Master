@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { hashPassword, comparePassword, signToken, generateReferralCode, computeRank } from "../lib/auth";
+import { hashPassword, comparePassword, signToken, generateReferralCode, computeRank, signVerificationToken, verifyVerificationToken } from "../lib/auth";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -39,7 +39,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     passwordHash,
     referralCode: newReferralCode,
     referredBy: referredById ?? undefined,
-    emailVerified: true,
+    emailVerified: false,
   }).returning();
 
   if (referredById) {
@@ -76,6 +76,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
       rank: user.rank,
       referralCode: user.referralCode,
       avatar: user.avatar,
+      emailVerified: user.emailVerified,
       createdAt: user.createdAt,
     },
     token,
@@ -123,6 +124,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
       rank: user.rank,
       referralCode: user.referralCode,
       avatar: user.avatar,
+      emailVerified: user.emailVerified,
       createdAt: user.createdAt,
     },
     token,
@@ -152,6 +154,7 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
     rank: user.rank,
     referralCode: user.referralCode,
     avatar: user.avatar,
+    emailVerified: user.emailVerified,
     createdAt: user.createdAt,
   });
 });
@@ -190,6 +193,37 @@ router.post("/auth/reset-password", async (req, res): Promise<void> => {
   const passwordHash = await hashPassword(password);
   await db.update(usersTable).set({ passwordHash, resetToken: null, resetTokenExpiry: null }).where(eq(usersTable.id, user.id));
   res.json({ message: "Password reset successfully" });
+});
+
+router.post("/auth/send-verification", requireAuth, async (req, res): Promise<void> => {
+  const userId = (req as any).userId as number;
+  const users = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+  if (users.length === 0) { res.status(404).json({ error: "User not found" }); return; }
+  const user = users[0];
+  if (user.emailVerified) {
+    res.json({ alreadyVerified: true, message: "Your email is already verified." });
+    return;
+  }
+  const verificationToken = signVerificationToken(userId);
+  const proto = (req.headers["x-forwarded-proto"] as string) ?? req.protocol ?? "https";
+  const host = req.get("host") ?? "localhost";
+  const verifyUrl = `${proto}://${host}/verify-email?token=${verificationToken}`;
+  res.json({ sent: false, verifyUrl, message: "Copy this link to verify your email (SMTP not configured yet)." });
+});
+
+router.get("/auth/verify-email", async (req, res): Promise<void> => {
+  const { token } = req.query as Record<string, string>;
+  if (!token) { res.status(400).json({ error: "Token is required" }); return; }
+  const payload = verifyVerificationToken(token);
+  if (!payload) { res.status(400).json({ error: "Invalid or expired verification link" }); return; }
+  const users = await db.select().from(usersTable).where(eq(usersTable.id, payload.userId));
+  if (users.length === 0) { res.status(404).json({ error: "User not found" }); return; }
+  if (users[0].emailVerified) {
+    res.json({ success: true, alreadyVerified: true, message: "Email was already verified." });
+    return;
+  }
+  await db.update(usersTable).set({ emailVerified: true }).where(eq(usersTable.id, payload.userId));
+  res.json({ success: true, message: "Email verified successfully! You can now make withdrawals." });
 });
 
 export default router;

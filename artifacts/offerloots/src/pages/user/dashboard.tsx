@@ -6,6 +6,68 @@ import { Badge } from "@/components/ui/badge";
 import { Coins, ArrowUpRight, History, Gamepad2, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useRef, useEffect } from "react";
+
+// ─── Live Conversion Ticker ──────────────────────────────────────────────────
+
+const TICKER_NAMES = [
+  "Ear", "Qui", "Top", "Pro", "Cas", "Fas", "Max", "Rio",
+  "Zen", "Sky", "Nex", "Ace", "Vex", "Key", "Lux", "Arc",
+];
+const TICKER_FLAGS = ["🇺🇸", "🇬🇧", "🇨🇦", "🇦🇺", "🇩🇪", "🇮🇳", "🇧🇷", "🇵🇭", "🇲🇽", "🇳🇬"];
+const TICKER_OFFERS = [
+  "App Install Task", "Shopping Survey", "Puzzle Game", "Survey Junkie",
+  "Finance App", "VPN Trial", "Casino Bonus", "Game Quest", "Music Stream",
+  "Fitness App", "Food Delivery", "Travel Survey", "Crypto Sign Up",
+];
+const TICKER_AMOUNTS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.5, 0.8, 1.2, 2.8];
+
+function maskUser(name: string) {
+  return name.slice(0, 3) + "****";
+}
+
+const TICKER_ITEMS = Array.from({ length: 18 }, (_, i) => ({
+  flag: TICKER_FLAGS[i % TICKER_FLAGS.length],
+  user: maskUser(TICKER_NAMES[i % TICKER_NAMES.length]),
+  amount: TICKER_AMOUNTS[i % TICKER_AMOUNTS.length].toFixed(2),
+  offer: TICKER_OFFERS[i % TICKER_OFFERS.length],
+}));
+
+function LiveTicker() {
+  return (
+    <div className="relative overflow-hidden bg-card/60 border rounded-xl px-4 py-2.5 flex items-center gap-3">
+      <style>{`
+        @keyframes ticker-scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
+      <div className="shrink-0 flex items-center gap-1.5 border-r pr-3 mr-1">
+        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+        <span className="text-[10px] font-bold text-green-400 uppercase tracking-wider">LIVE</span>
+      </div>
+      <div className="overflow-hidden flex-1">
+        <div
+          className="flex gap-10 whitespace-nowrap will-change-transform"
+          style={{ animation: "ticker-scroll 45s linear infinite" }}
+        >
+          {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+            <span key={i} className="inline-flex items-center gap-1.5 text-xs">
+              <span className="text-base leading-none">{item.flag}</span>
+              <span className="font-semibold text-foreground">{item.user}</span>
+              <span className="text-muted-foreground">earned</span>
+              <span className="font-bold text-primary">${item.amount}</span>
+              <span className="text-muted-foreground">from</span>
+              <span className="text-foreground/80">{item.offer}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Dashboard Page ───────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const { data: dashboard, isLoading } = useGetUserDashboard();
@@ -23,6 +85,9 @@ export default function Dashboard() {
   return (
     <AppLayout>
       <div className="space-y-6">
+        {/* Live Conversion Ticker */}
+        <LiveTicker />
+
         <div>
           <h1 className="text-3xl font-display font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Welcome back! Here's your earning summary.</p>
@@ -58,123 +123,94 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${(dashboard?.totalEarned || 0).toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Lifetime earnings</p>
+              <p className="text-xs text-muted-foreground mt-1">All time earnings</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Withdrawals</CardTitle>
-              <History className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Completed Offers</CardTitle>
+              <Gamepad2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboard?.pendingWithdrawals || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">Processing</p>
+              <div className="text-2xl font-bold">{dashboard?.completedOffers || 0}</div>
+              <p className="text-xs text-muted-foreground mt-1">Offers completed</p>
             </CardContent>
           </Card>
         </div>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-4">
-              <div>
-                <h3 className="font-bold text-lg">Rank: <span className="text-primary capitalize">{dashboard?.rank}</span></h3>
-                <p className="text-sm text-muted-foreground">Earn more to reach the next rank and unlock better bonuses.</p>
-              </div>
-              <div className="w-full md:w-1/2">
-                <div className="flex justify-between text-xs mb-1">
-                  <span>Progress</span>
-                  <span>{dashboard?.rankProgress || 0}%</span>
-                </div>
-                <Progress value={dashboard?.rankProgress || 0} className="h-2" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Recent Conversions</CardTitle>
-              <Link href="/transactions">
-                <Button variant="ghost" size="sm">View All</Button>
-              </Link>
+            <CardHeader>
+              <CardTitle className="text-base">Rank Progress</CardTitle>
             </CardHeader>
-            <CardContent>
-              {dashboard?.recentConversions && dashboard.recentConversions.length > 0 ? (
-                <div className="space-y-4">
-                  {dashboard.recentConversions.map((conv) => (
-                    <div key={conv.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                          <Gamepad2 className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm line-clamp-1">{conv.offerName}</p>
-                          <p className="text-xs text-muted-foreground">{conv.network}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-primary">+${conv.amount.toFixed(2)}</p>
-                        <Badge variant="outline" className="text-[10px] mt-1">{conv.status}</Badge>
-                      </div>
-                    </div>
-                  ))}
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge className="capitalize">{dashboard?.rank || "Bronze"}</Badge>
+                  <span className="text-sm text-muted-foreground">Current Rank</span>
                 </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No recent conversions.</p>
-                  <Link href="/earn">
-                    <Button variant="link" className="mt-2 text-primary">Start earning now</Button>
-                  </Link>
-                </div>
-              )}
+                <span className="text-sm font-medium">{dashboard?.rankProgress || 0}%</span>
+              </div>
+              <Progress value={dashboard?.rankProgress || 0} className="h-2" />
+              <p className="text-xs text-muted-foreground">
+                Complete more offers to rank up and earn higher bonuses
+              </p>
             </CardContent>
           </Card>
 
-          <div className="space-y-6">
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="pt-6">
-                <h3 className="font-bold text-xl mb-2">Ready to earn?</h3>
-                <p className="text-muted-foreground text-sm mb-4">
-                  Explore our top-paying offerwalls and start earning cash immediately.
-                </p>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button className="w-full justify-between" asChild>
                 <Link href="/earn">
-                  <Button className="w-full font-bold">
-                    Go to Offerwalls <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
+                  Browse Offers
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Transactions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {dashboard?.recentTransactions && dashboard.recentTransactions.length > 0 ? (
-                  <div className="space-y-4">
-                    {dashboard.recentTransactions.slice(0, 4).map((tx) => (
-                      <div key={tx.id} className="flex items-center justify-between border-b last:border-0 pb-3 last:pb-0">
-                        <div>
-                          <p className="font-medium text-sm">{tx.description}</p>
-                          <p className="text-xs text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString()}</p>
-                        </div>
-                        <div className={`font-bold ${tx.type === 'debit' || tx.type === 'withdrawal' ? 'text-destructive' : 'text-primary'}`}>
-                          {tx.type === 'debit' || tx.type === 'withdrawal' ? '-' : '+'}${Math.abs(tx.amount).toFixed(2)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-muted-foreground">
-                    <p>No recent transactions.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+              </Button>
+              <Button variant="outline" className="w-full justify-between" asChild>
+                <Link href="/withdrawals">
+                  Withdraw Earnings
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button variant="outline" className="w-full justify-between" asChild>
+                <Link href="/referrals">
+                  Refer Friends
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
+
+        {dashboard?.recentTransactions && dashboard.recentTransactions.length > 0 && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Recent Transactions</CardTitle>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/transactions">View all</Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {dashboard.recentTransactions.slice(0, 5).map((tx: any) => (
+                  <div key={tx.id} className="flex items-center justify-between py-1 border-b last:border-0">
+                    <div>
+                      <p className="text-sm font-medium capitalize">{tx.type.replace(/_/g, " ")}</p>
+                      <p className="text-xs text-muted-foreground">{tx.description || "—"}</p>
+                    </div>
+                    <span className={`font-bold text-sm ${parseFloat(tx.amount) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                      {parseFloat(tx.amount) >= 0 ? "+" : ""}${Math.abs(parseFloat(tx.amount)).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AppLayout>
   );

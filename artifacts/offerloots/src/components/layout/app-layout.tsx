@@ -39,7 +39,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   const navItems = [
-    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Withdrawals", href: "/withdrawals", icon: ArrowDownToLine },
     { label: "Transactions", href: "/transactions", icon: History },
     { label: "Referrals", href: "/referrals", icon: Users },

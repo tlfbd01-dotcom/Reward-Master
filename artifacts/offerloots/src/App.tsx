@@ -22,6 +22,7 @@ import Earn from "@/pages/user/earn";
 import EarnDetail from "@/pages/user/earn-detail";
 import EarnOfferwall from "@/pages/user/earn-offerwall";
 import EarnSurvey from "@/pages/user/earn-survey";
+import VerifyEmail from "@/pages/user/verify-email";
 import Withdrawals from "@/pages/user/withdrawals";
 import Transactions from "@/pages/user/transactions";
 import Referrals from "@/pages/user/referrals";
@@ -50,6 +51,7 @@ function Router() {
       {/* Auth Routes */}
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/verify-email" component={VerifyEmail} />
       
       {/* Protected User Routes */}
       <Route path="/dashboard"><ProtectedRoute component={Dashboard} /></Route>

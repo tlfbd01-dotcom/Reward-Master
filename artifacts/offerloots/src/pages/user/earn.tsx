@@ -8,7 +8,7 @@ import {
   Gamepad2, Monitor, Smartphone, Layers, ExternalLink,
   Loader2, Globe, ShieldCheck, CheckCircle2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
@@ -42,26 +42,15 @@ const NETWORK_TAG_COLORS = [
   "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
 ];
 
-const COUNTRIES = [
-  { code: "US", label: "🇺🇸 United States" },
-  { code: "GB", label: "🇬🇧 United Kingdom" },
-  { code: "CA", label: "🇨🇦 Canada" },
-  { code: "AU", label: "🇦🇺 Australia" },
-  { code: "DE", label: "🇩🇪 Germany" },
-  { code: "FR", label: "🇫🇷 France" },
-  { code: "IN", label: "🇮🇳 India" },
-  { code: "BR", label: "🇧🇷 Brazil" },
-  { code: "NG", label: "🇳🇬 Nigeria" },
-  { code: "PH", label: "🇵🇭 Philippines" },
-  { code: "ID", label: "🇮🇩 Indonesia" },
-  { code: "MX", label: "🇲🇽 Mexico" },
-  { code: "PK", label: "🇵🇰 Pakistan" },
-  { code: "BD", label: "🇧🇩 Bangladesh" },
-  { code: "TR", label: "🇹🇷 Turkey" },
-  { code: "ZA", label: "🇿🇦 South Africa" },
-  { code: "EG", label: "🇪🇬 Egypt" },
-  { code: "AR", label: "🇦🇷 Argentina" },
-];
+const COUNTRY_FLAGS: Record<string, string> = {
+  US: "🇺🇸", GB: "🇬🇧", CA: "🇨🇦", AU: "🇦🇺", DE: "🇩🇪", FR: "🇫🇷",
+  IN: "🇮🇳", BR: "🇧🇷", NG: "🇳🇬", PH: "🇵🇭", ID: "🇮🇩", MX: "🇲🇽",
+  PK: "🇵🇰", BD: "🇧🇩", TR: "🇹🇷", ZA: "🇿🇦", EG: "🇪🇬", AR: "🇦🇷",
+  JP: "🇯🇵", KR: "🇰🇷", IT: "🇮🇹", ES: "🇪🇸", NL: "🇳🇱", SE: "🇸🇪",
+  NO: "🇳🇴", PL: "🇵🇱", RU: "🇷🇺", TH: "🇹🇭", VN: "🇻🇳", MY: "🇲🇾",
+  SG: "🇸🇬", NZ: "🇳🇿", IL: "🇮🇱", AE: "🇦🇪", SA: "🇸🇦", GH: "🇬🇭",
+  KE: "🇰🇪", UA: "🇺🇦", CZ: "🇨🇿", HU: "🇭🇺", RO: "🇷🇴", PT: "🇵🇹",
+};
 
 // ─── Offer Detail Popup ───────────────────────────────────────────────────────
 
@@ -212,6 +201,14 @@ export default function Earn() {
   const [country, setCountry] = useState<string>("all");
   const [selectedOfferId, setSelectedOfferId] = useState<number | null>(null);
 
+  const [availableCountries, setAvailableCountries] = useState<string[]>([]);
+
+  useEffect(() => {
+    customFetch<string[]>("/api/offers/countries")
+      .then(codes => setAvailableCountries(codes))
+      .catch(() => {});
+  }, []);
+
   const { data: networksData } = useGetNetworks();
   const queryParams: any = { page, limit: OFFERS_PER_PAGE };
   if (network !== "all") queryParams.network = network;
@@ -253,8 +250,10 @@ export default function Earn() {
             <SelectTrigger className="w-44 h-8 text-xs"><SelectValue placeholder="All Countries" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">🌍 All Countries</SelectItem>
-              {COUNTRIES.map((c) => (
-                <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
+              {availableCountries.map((code) => (
+                <SelectItem key={code} value={code}>
+                  {(COUNTRY_FLAGS[code] ?? "🏳") + " " + code}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
