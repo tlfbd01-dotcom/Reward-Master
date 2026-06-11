@@ -1,15 +1,23 @@
 import { Router, type IRouter } from "express";
-import { db, offersTable, offerClicksTable } from "@workspace/db";
+import { db, offersTable, offerClicksTable, networksTable } from "@workspace/db";
 import { eq, sql, and } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
-function serializeOffer(o: typeof offersTable.$inferSelect) {
+function applyPayoutPct(rawPayout: string, payoutPercent: number | null): number {
+  const pct = (payoutPercent != null && payoutPercent > 0) ? payoutPercent : 100;
+  return Math.round(parseFloat(rawPayout) * (pct / 100) * 100) / 100;
+}
+
+function serializeOffer(
+  o: typeof offersTable.$inferSelect,
+  payoutPercent: number | null,
+) {
   return {
     id: o.id,
     name: o.name,
-    payout: parseFloat(o.payout),
+    payout: applyPayoutPct(o.payout, payoutPercent),
     network: o.network,
     networkId: o.networkId,
     status: o.status,
@@ -41,17 +49,25 @@ router.get("/offers", async (req, res): Promise<void> => {
 
   const [countResult, rows] = await Promise.all([
     db.select({ count: sql<number>`count(*)` }).from(offersTable).where(where),
-    db.select().from(offersTable).where(where)
-      .orderBy(sql`payout DESC`).limit(limit).offset(offset),
+    db.select({
+      offer: offersTable,
+      payoutPercent: networksTable.payoutPercent,
+    })
+      .from(offersTable)
+      .leftJoin(networksTable, sql`lower(${offersTable.network}) = lower(${networksTable.slug})`)
+      .where(where)
+      .orderBy(sql`${offersTable.payout} DESC`)
+      .limit(limit)
+      .offset(offset),
   ]);
 
-  const data = rows.filter(o => {
-    if (country && !o.countries.includes(country) && !o.countries.includes("ALL")) return false;
+  const data = rows.filter(r => {
+    if (country && !r.offer.countries.includes(country) && !r.offer.countries.includes("ALL")) return false;
     return true;
   });
 
   res.json({
-    data: data.map(serializeOffer),
+    data: data.map(r => serializeOffer(r.offer, r.payoutPercent ?? null)),
     total: Number(countResult[0]?.count ?? 0),
     page,
     limit,
@@ -72,20 +88,33 @@ router.get("/offers/countries", async (_req, res): Promise<void> => {
 });
 
 router.get("/offers/featured", async (_req, res): Promise<void> => {
-  const rows = await db.select().from(offersTable)
+  const rows = await db.select({
+    offer: offersTable,
+    payoutPercent: networksTable.payoutPercent,
+  })
+    .from(offersTable)
+    .leftJoin(networksTable, sql`lower(${offersTable.network}) = lower(${networksTable.slug})`)
     .where(eq(offersTable.status, "active"))
-    .orderBy(sql`payout DESC`)
+    .orderBy(sql`${offersTable.payout} DESC`)
     .limit(8);
-  res.json(rows.map(serializeOffer));
+  res.json(rows.map(r => serializeOffer(r.offer, r.payoutPercent ?? null)));
 });
 
 router.get("/offers/:id", async (req, res): Promise<void> => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(rawId, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-  const rows = await db.select().from(offersTable).where(eq(offersTable.id, id));
+
+  const rows = await db.select({
+    offer: offersTable,
+    payoutPercent: networksTable.payoutPercent,
+  })
+    .from(offersTable)
+    .leftJoin(networksTable, sql`lower(${offersTable.network}) = lower(${networksTable.slug})`)
+    .where(eq(offersTable.id, id));
+
   if (rows.length === 0) { res.status(404).json({ error: "Offer not found" }); return; }
-  res.json(serializeOffer(rows[0]));
+  res.json(serializeOffer(rows[0].offer, rows[0].payoutPercent ?? null));
 });
 
 // Click tracking — logs click and returns the redirect URL with USER_ID substituted
