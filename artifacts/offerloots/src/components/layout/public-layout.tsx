@@ -32,7 +32,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-background/80 selection:bg-primary/30">
+    <div className="min-h-[100dvh] flex flex-col bg-background/90 selection:bg-primary/30">
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center">

@@ -273,7 +273,7 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section className="py-24 bg-card/70 border-t">
+      <section className="py-24 bg-card/85 border-t">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">How OfferLoots Works</h2>
