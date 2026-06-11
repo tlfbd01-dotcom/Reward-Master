@@ -9,12 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { Loader2, ShieldCheck, User, MailWarning, CheckCircle2, Copy, ExternalLink } from "lucide-react";
+import { Loader2, ShieldCheck, MailWarning, CheckCircle2, Copy, ExternalLink, Pencil } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
+import { AvatarPicker } from "@/components/avatar-picker";
+import { getAvatarUrl } from "@/lib/avatars";
 
 export default function Profile() {
   const { toast } = useToast();
@@ -27,6 +29,7 @@ export default function Profile() {
   const [country, setCountry] = useState("");
   const [sendingVerification, setSendingVerification] = useState(false);
   const [verifyUrl, setVerifyUrl] = useState<string | null>(null);
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const emailVerified = (user as any)?.emailVerified === true;
 
   useEffect(() => {
@@ -75,6 +78,8 @@ export default function Profile() {
     }
   };
 
+  const avatarUrl = getAvatarUrl(profile?.avatar ?? user?.avatar);
+
   if (isLoading) {
     return (
       <AppLayout>
@@ -114,6 +119,13 @@ export default function Profile() {
         </DialogContent>
       </Dialog>
 
+      {/* Avatar Picker Dialog */}
+      <AvatarPicker
+        open={avatarPickerOpen}
+        onOpenChange={setAvatarPickerOpen}
+        currentAvatarId={profile?.avatar ?? user?.avatar}
+      />
+
       <div className="space-y-6 max-w-4xl mx-auto">
         <div>
           <h1 className="text-3xl font-display font-bold">Account Settings</h1>
@@ -124,11 +136,36 @@ export default function Profile() {
           <div className="md:col-span-1 space-y-6">
             <Card>
               <CardContent className="pt-6 flex flex-col items-center text-center">
-                <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center text-3xl font-bold text-primary mb-4 border-4 border-background shadow-xl">
-                  {profile?.username?.charAt(0).toUpperCase() || "U"}
-                </div>
+                {/* Clickable avatar */}
+                <button
+                  type="button"
+                  onClick={() => setAvatarPickerOpen(true)}
+                  className="relative group mb-4 cursor-pointer"
+                  title="Click to change avatar"
+                >
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-background shadow-xl bg-primary/20 flex items-center justify-center">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-3xl font-bold text-primary">
+                        {profile?.username?.charAt(0).toUpperCase() || "U"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <Pencil className="w-5 h-5 text-white" />
+                  </div>
+                </button>
                 <h3 className="font-bold text-xl">{profile?.username}</h3>
-                <p className="text-muted-foreground text-sm mb-4">{profile?.email}</p>
+                <p className="text-muted-foreground text-sm mb-1">{profile?.email}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-muted-foreground hover:text-primary gap-1.5 mb-2"
+                  onClick={() => setAvatarPickerOpen(true)}
+                >
+                  <Pencil className="w-3 h-3" /> Change Avatar
+                </Button>
                 <div className="w-full pt-4 border-t flex justify-between text-sm">
                   <span className="text-muted-foreground">Member Since</span>
                   <span className="font-medium">{profile ? new Date(profile.createdAt).toLocaleDateString() : ""}</span>

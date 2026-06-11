@@ -14,12 +14,14 @@ import {
 } from "lucide-react";
 import { useLogout } from "@workspace/api-client-react";
 import { useState, useEffect } from "react";
+import { getAvatarUrl } from "@/lib/avatars";
 
 const logoSrc = "/logo.png";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { user, logout: clearAuth } = useAuth();
+  const avatarUrl = getAvatarUrl(user?.avatar);
   const logoutMutation = useLogout();
   const [earnOpen, setEarnOpen] = useState(location.startsWith("/earn"));
 
@@ -68,8 +70,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarGroupContent>
                 <div className="px-4 py-4 mb-4 bg-muted/30 rounded-xl mx-2 mt-4 border border-border/50">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                      {user?.username?.charAt(0).toUpperCase() || "U"}
+                    <div className="w-10 h-10 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center text-primary font-bold border border-border/50">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        user?.username?.charAt(0).toUpperCase() || "U"
+                      )}
                     </div>
                     <div>
                       <div className="font-semibold text-sm">{user?.username}</div>

@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Coins, ArrowUpRight, History, Gamepad2, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { useRef, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth";
+import { AvatarPicker } from "@/components/avatar-picker";
 
 // ─── Live Conversion Ticker ──────────────────────────────────────────────────
 
@@ -71,6 +73,18 @@ function LiveTicker() {
 
 export default function Dashboard() {
   const { data: dashboard, isLoading } = useGetUserDashboard();
+  const { user } = useAuth();
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
+
+  useEffect(() => {
+    if (user && !user.avatar) {
+      const key = `offerloots_avatar_prompted_${user.id}`;
+      if (!localStorage.getItem(key)) {
+        setAvatarPickerOpen(true);
+        localStorage.setItem(key, "1");
+      }
+    }
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -84,6 +98,13 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
+      <AvatarPicker
+        open={avatarPickerOpen}
+        onOpenChange={setAvatarPickerOpen}
+        currentAvatarId={user?.avatar}
+        firstTime
+      />
+
       <div className="space-y-6">
         {/* Live Conversion Ticker */}
         <LiveTicker />
@@ -133,7 +154,7 @@ export default function Dashboard() {
               <Gamepad2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboard?.completedOffers || 0}</div>
+              <div className="text-2xl font-bold">{dashboard?.totalConversions || 0}</div>
               <p className="text-xs text-muted-foreground mt-1">Offers completed</p>
             </CardContent>
           </Card>
