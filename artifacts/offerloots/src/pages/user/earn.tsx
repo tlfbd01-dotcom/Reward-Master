@@ -11,6 +11,7 @@ import {
 import {
   Gamepad2, Monitor, Smartphone, Star, TrendingUp, Layers, X,
   ExternalLink, Loader2, Zap, Globe, ShieldCheck, CheckCircle2, DollarSign,
+  ClipboardList,
 } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
@@ -158,19 +159,6 @@ function OfferDetailPopup({
                   </Badge>
                 )}
               </div>
-              {/* Device indicator */}
-              <div className="absolute top-3 right-3">
-                {(offer as any).device === "mobile" && (
-                  <Badge variant="outline" className="bg-background/90 backdrop-blur gap-1 text-xs">
-                    <Smartphone className="w-3 h-3" /> Mobile
-                  </Badge>
-                )}
-                {(offer as any).device === "desktop" && (
-                  <Badge variant="outline" className="bg-background/90 backdrop-blur gap-1 text-xs">
-                    <Monitor className="w-3 h-3" /> Desktop
-                  </Badge>
-                )}
-              </div>
             </div>
 
             {/* Body */}
@@ -184,6 +172,16 @@ function OfferDetailPopup({
                       <Globe className="w-2.5 h-2.5" />
                       {(offer as any).countries?.length ? (offer as any).countries.slice(0, 3).join(", ") : "Global"}
                     </Badge>
+                    {(offer as any).device === "mobile" && (
+                      <Badge variant="outline" className="text-xs gap-1">
+                        <Smartphone className="w-3 h-3" /> Mobile
+                      </Badge>
+                    )}
+                    {(offer as any).device === "desktop" && (
+                      <Badge variant="outline" className="text-xs gap-1">
+                        <Monitor className="w-3 h-3" /> Desktop
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <div className={`text-3xl font-bold shrink-0 ${payoutColor}`}>
@@ -357,6 +355,7 @@ const OFFERS_PER_PAGE = 40;
 
 export default function Earn() {
   const [page, setPage] = useState(1);
+  const [surveyPage, setSurveyPage] = useState(1);
   const [network, setNetwork] = useState<string>("all");
   const [device, setDevice] = useState<string>("all");
   const [walls, setWalls] = useState<Wall[]>([]);
@@ -365,10 +364,16 @@ export default function Earn() {
   const [selectedOfferId, setSelectedOfferId] = useState<number | null>(null);
 
   const { data: networksData } = useGetNetworks();
+
+  // Offers query (non-survey)
   const queryParams: any = { page, limit: OFFERS_PER_PAGE };
   if (network !== "all") queryParams.network = network;
   if (device !== "all") queryParams.device = device;
   const { data: offersData, isLoading } = useGetOffers(queryParams);
+
+  // Survey query (category=survey)
+  const surveyParams: any = { page: surveyPage, limit: OFFERS_PER_PAGE, category: "survey" };
+  const { data: surveyData, isLoading: surveyLoading } = useGetOffers(surveyParams);
 
   useEffect(() => {
     customFetch<Wall[]>("/api/walls")
@@ -378,6 +383,84 @@ export default function Earn() {
   }, []);
 
   const totalPages = offersData ? Math.ceil(offersData.total / OFFERS_PER_PAGE) : 1;
+  const surveyTotalPages = surveyData ? Math.ceil(surveyData.total / OFFERS_PER_PAGE) : 1;
+
+  // Shared offer grid renderer
+  function OfferGrid({ data, loading, emptyMsg }: { data: any; loading: boolean; emptyMsg?: string }) {
+    if (loading) return (
+      <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+        {[...Array(40)].map((_, i) => <div key={i} className="animate-pulse bg-muted/50 rounded-xl aspect-[3/4]" />)}
+      </div>
+    );
+    if (!data?.data?.length) return (
+      <div className="text-center py-20 bg-card rounded-xl border">
+        <Gamepad2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-xl font-bold">{emptyMsg ?? "No offers found"}</h3>
+        <p className="text-muted-foreground">Try adjusting your filters.</p>
+      </div>
+    );
+    return (
+      <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+        {data.data.map((offer: any) => {
+          const colorIdx = offer.id % CARD_ACCENT_COLORS.length;
+          const payoutColor = PAYOUT_COLORS[colorIdx];
+          const accentBorder = CARD_ACCENT_COLORS[colorIdx];
+          const networkTagColor = NETWORK_TAG_COLORS[colorIdx];
+          const hasEvents = offer.events && offer.events.length > 0;
+          return (
+            <div
+              key={offer.id}
+              className={`group relative bg-card rounded-xl border ${accentBorder} transition-all hover:shadow-lg hover:scale-[1.04] overflow-hidden flex flex-col cursor-pointer`}
+              onClick={() => setSelectedOfferId(offer.id)}
+            >
+              {/* Image */}
+              <div className="aspect-square bg-muted/30 relative overflow-hidden flex items-center justify-center">
+                {offer.imageUrl ? (
+                  <img
+                    src={offer.imageUrl}
+                    alt={offer.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    loading="lazy"
+                  />
+                ) : (
+                  <Gamepad2 className="w-5 h-5 text-muted-foreground/30" />
+                )}
+                {/* Device icon */}
+                {offer.device !== "all" && offer.device && (
+                  <div className="absolute top-1 right-1">
+                    {offer.device === "mobile"
+                      ? <Smartphone className="w-2.5 h-2.5 text-white/70 drop-shadow" />
+                      : <Monitor className="w-2.5 h-2.5 text-white/70 drop-shadow" />}
+                  </div>
+                )}
+                {/* Multi-event badge */}
+                {hasEvents && (
+                  <div className="absolute top-1 left-1 bg-black/60 rounded px-1 py-0.5">
+                    <span className="text-[8px] text-white font-bold">{offer.events.length}✦</span>
+                  </div>
+                )}
+              </div>
+              {/* Info */}
+              <div className="p-1.5 flex flex-col gap-0.5 flex-1">
+                <span className={`inline-block text-[8px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded border ${networkTagColor} leading-none self-start truncate max-w-full`}>
+                  {offer.network}
+                </span>
+                <p className="text-[10px] leading-tight font-medium line-clamp-2 text-foreground/90 mt-0.5">{offer.name}</p>
+                {offer.device && offer.device !== "all" && (
+                  <span className="text-[8px] text-muted-foreground/70 leading-none">
+                    {offer.device === "mobile" ? "📱 Mobile" : "🖥 Desktop"}
+                  </span>
+                )}
+                <div className="mt-auto flex justify-end">
+                  <span className={`text-[13px] font-extrabold ${payoutColor}`}>${offer.payout.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <AppLayout>
@@ -387,41 +470,26 @@ export default function Earn() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-display font-bold">Earn Cash</h1>
-          <p className="text-muted-foreground">Complete offers or browse offerwall networks to earn real money.</p>
+          <p className="text-muted-foreground">Complete offers, browse offerwall networks, or take surveys to earn real money.</p>
         </div>
 
-        <Tabs defaultValue="walls">
-          <TabsList className="grid w-full max-w-sm grid-cols-2">
-            <TabsTrigger value="walls" className="gap-2">
-              <Layers className="w-4 h-4" /> Offerwalls
+        <Tabs defaultValue="offers">
+          <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsTrigger value="offers" className="gap-2">
+              <Gamepad2 className="w-4 h-4" /> Offers
+              {offersData && <Badge variant="secondary" className="text-xs px-1.5">{offersData.total.toLocaleString()}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="offerwall" className="gap-2">
+              <Layers className="w-4 h-4" /> Offerwall
               {walls.length > 0 && <Badge variant="secondary" className="text-xs px-1.5">{walls.length}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="offers" className="gap-2">
-              <Gamepad2 className="w-4 h-4" /> Individual Offers
-              {offersData && <Badge variant="secondary" className="text-xs px-1.5">{offersData.total.toLocaleString()}</Badge>}
+            <TabsTrigger value="survey" className="gap-2">
+              <ClipboardList className="w-4 h-4" /> Survey
+              {surveyData && surveyData.total > 0 && <Badge variant="secondary" className="text-xs px-1.5">{surveyData.total.toLocaleString()}</Badge>}
             </TabsTrigger>
           </TabsList>
 
-          {/* OFFERWALLS TAB */}
-          <TabsContent value="walls" className="mt-6">
-            {wallsLoading ? (
-              <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-            ) : walls.length === 0 ? (
-              <div className="text-center py-20 bg-card rounded-xl border">
-                <Layers className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-bold">No offerwalls available</h3>
-                <p className="text-muted-foreground">Check back soon.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {walls.map((w, i) => (
-                  <WallCard key={w.id} wall={w} index={i} onOpen={setActiveWall} />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* INDIVIDUAL OFFERS TAB */}
+          {/* OFFERS TAB */}
           <TabsContent value="offers" className="mt-6 space-y-4">
             {/* Filters */}
             <div className="flex flex-wrap gap-3 items-center">
@@ -454,104 +522,78 @@ export default function Earn() {
               )}
             </div>
 
-            {isLoading ? (
-              <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
-                {[...Array(40)].map((_, i) => <div key={i} className="animate-pulse bg-muted/50 rounded-xl aspect-[3/4]" />)}
-              </div>
-            ) : offersData?.data?.length === 0 ? (
-              <div className="text-center py-20 bg-card rounded-xl border">
-                <Gamepad2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-bold">No offers found</h3>
-                <p className="text-muted-foreground">Try adjusting your filters.</p>
-              </div>
-            ) : (
-              <>
-                {/* 8-per-row compact grid */}
-                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
-                  {offersData?.data.map((offer: any) => {
-                    const colorIdx = offer.id % CARD_ACCENT_COLORS.length;
-                    const payoutColor = PAYOUT_COLORS[colorIdx];
-                    const accentBorder = CARD_ACCENT_COLORS[colorIdx];
-                    const networkTagColor = NETWORK_TAG_COLORS[colorIdx];
-                    const hasEvents = offer.events && offer.events.length > 0;
-                    return (
-                      <div
-                        key={offer.id}
-                        className={`group relative bg-card rounded-xl border ${accentBorder} transition-all hover:shadow-lg hover:scale-[1.04] overflow-hidden flex flex-col cursor-pointer`}
-                        onClick={() => setSelectedOfferId(offer.id)}
-                      >
-                        {/* Image */}
-                        <div className="aspect-square bg-muted/30 relative overflow-hidden flex items-center justify-center">
-                          {offer.imageUrl ? (
-                            <img
-                              src={offer.imageUrl}
-                              alt={offer.name}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <Gamepad2 className="w-5 h-5 text-muted-foreground/30" />
-                          )}
-                          {/* Device icon */}
-                          {offer.device !== "all" && offer.device && (
-                            <div className="absolute top-1 right-1">
-                              {offer.device === "mobile"
-                                ? <Smartphone className="w-2.5 h-2.5 text-white/70 drop-shadow" />
-                                : <Monitor className="w-2.5 h-2.5 text-white/70 drop-shadow" />}
-                            </div>
-                          )}
-                          {/* Multi-event badge */}
-                          {hasEvents && (
-                            <div className="absolute top-1 left-1 bg-black/60 rounded px-1 py-0.5">
-                              <span className="text-[8px] text-white font-bold">{offer.events.length}✦</span>
-                            </div>
-                          )}
-                        </div>
+            <OfferGrid data={offersData} loading={isLoading} emptyMsg="No offers found" />
 
-                        {/* Info */}
-                        <div className="p-1.5 flex flex-col gap-0.5 flex-1">
-                          {/* Network tag */}
-                          <span className={`inline-block text-[8px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded border ${networkTagColor} leading-none self-start truncate max-w-full`}>
-                            {offer.network}
-                          </span>
-                          {/* Name */}
-                          <p className="text-[10px] leading-tight font-medium line-clamp-2 text-foreground/90 mt-0.5">{offer.name}</p>
-                          {/* Device label */}
-                          {offer.device && offer.device !== "all" && (
-                            <span className="text-[8px] text-muted-foreground/70 leading-none">
-                              {offer.device === "mobile" ? "📱 Mobile" : "🖥 Desktop"}
-                            </span>
-                          )}
-                          {/* Payout */}
-                          <div className={`text-[11px] font-bold mt-auto ${payoutColor}`}>${offer.payout.toFixed(2)}</div>
-                        </div>
-                      </div>
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 pt-4">
+                <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Prev</Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                    const p = totalPages <= 7 ? i + 1 : page <= 4 ? i + 1 : page >= totalPages - 3 ? totalPages - 6 + i : page - 3 + i;
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p)}
+                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${p === page ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"}`}
+                      >
+                        {p}
+                      </button>
                     );
                   })}
                 </div>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next →</Button>
+              </div>
+            )}
+          </TabsContent>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-2 pt-4">
-                    <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Prev</Button>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-                        const p = totalPages <= 7 ? i + 1 : page <= 4 ? i + 1 : page >= totalPages - 3 ? totalPages - 6 + i : page - 3 + i;
-                        return (
-                          <button
-                            key={p}
-                            onClick={() => setPage(p)}
-                            className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${p === page ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"}`}
-                          >
-                            {p}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next →</Button>
-                  </div>
-                )}
-              </>
+          {/* OFFERWALL TAB */}
+          <TabsContent value="offerwall" className="mt-6">
+            {wallsLoading ? (
+              <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+            ) : walls.length === 0 ? (
+              <div className="text-center py-20 bg-card rounded-xl border">
+                <Layers className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-bold">No offerwalls available</h3>
+                <p className="text-muted-foreground">Check back soon.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {walls.map((w, i) => (
+                  <WallCard key={w.id} wall={w} index={i} onOpen={setActiveWall} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* SURVEY TAB */}
+          <TabsContent value="survey" className="mt-6 space-y-4">
+            {surveyData && (
+              <div className="flex justify-end">
+                <span className="text-xs text-muted-foreground">
+                  {surveyData.total.toLocaleString()} surveys · Page {surveyPage}/{surveyTotalPages}
+                </span>
+              </div>
+            )}
+            <OfferGrid data={surveyData} loading={surveyLoading} emptyMsg="No surveys available" />
+            {surveyTotalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 pt-4">
+                <Button variant="outline" size="sm" disabled={surveyPage === 1} onClick={() => setSurveyPage(p => p - 1)}>← Prev</Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(surveyTotalPages, 7) }, (_, i) => {
+                    const p = surveyTotalPages <= 7 ? i + 1 : surveyPage <= 4 ? i + 1 : surveyPage >= surveyTotalPages - 3 ? surveyTotalPages - 6 + i : surveyPage - 3 + i;
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => setSurveyPage(p)}
+                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${p === surveyPage ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"}`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Button variant="outline" size="sm" disabled={surveyPage >= surveyTotalPages} onClick={() => setSurveyPage(p => p + 1)}>Next →</Button>
+              </div>
             )}
           </TabsContent>
         </Tabs>
