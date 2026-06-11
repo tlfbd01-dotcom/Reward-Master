@@ -104,6 +104,17 @@ router.patch("/admin/users/:id", requireAdmin, async (req, res): Promise<void> =
   const id = parseInt(rawId, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
+  const requesterId = (req as any).userId as number;
+
+  // Protect the main admin (ID=1) from being banned or demoted by other admins
+  if (id === 1 && requesterId !== 1) {
+    const { status, role } = req.body;
+    if (status === "banned" || (role && role !== "admin")) {
+      res.status(403).json({ error: "The main admin account cannot be banned or demoted." });
+      return;
+    }
+  }
+
   const { status, balance, points, role } = req.body;
   const updates: Partial<typeof usersTable.$inferInsert> = {};
   if (status) updates.status = status;
@@ -446,6 +457,72 @@ router.post("/admin/networks/:id/sync", requireAdmin, async (req, res): Promise<
   } catch (err: any) {
     res.status(400).json({ error: err?.message ?? "Sync failed" });
   }
+});
+
+// Create a new admin account
+router.post("/admin/create-admin", requireAdmin, async (req, res): Promise<void> => {
+  const { username, email, password } = req.body;
+  if (!username || !email || !password) {
+    res.status(400).json({ error: "username, email and password are required" });
+    return;
+  }
+
+  const { hashPassword, generateReferralCode } = await import("../lib/auth");
+
+  const existing = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  if (existing.length > 0) { res.status(400).json({ error: "Email already in use" }); return; }
+  const existingUser = await db.select().from(usersTable).where(eq(usersTable.username, username));
+  if (existingUser.length > 0) { res.status(400).json({ error: "Username already taken" }); return; }
+
+  const passwordHash = await hashPassword(password);
+  const [u] = await db.insert(usersTable).values({
+    username, email, passwordHash,
+    role: "admin",
+    referralCode: generateReferralCode(),
+    emailVerified: true,
+  }).returning();
+
+  res.status(201).json({
+    id: u.id, username: u.username, email: u.email, role: u.role, status: u.status,
+    balance: parseFloat(u.balance), createdAt: u.createdAt,
+  });
+});
+
+// Admin updates own profile (email and/or password)
+router.patch("/admin/profile", requireAdmin, async (req, res): Promise<void> => {
+  const requesterId = (req as any).userId as number;
+  const { email, currentPassword, newPassword } = req.body;
+
+  const users = await db.select().from(usersTable).where(eq(usersTable.id, requesterId));
+  if (users.length === 0) { res.status(404).json({ error: "Admin not found" }); return; }
+  const admin = users[0];
+
+  const { comparePassword, hashPassword } = await import("../lib/auth");
+  const updates: Partial<typeof usersTable.$inferInsert> = {};
+
+  if (email && email !== admin.email) {
+    const emailExists = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    if (emailExists.length > 0) { res.status(400).json({ error: "Email already in use" }); return; }
+    updates.email = email;
+  }
+
+  if (newPassword) {
+    if (!currentPassword) { res.status(400).json({ error: "Current password is required to set a new password" }); return; }
+    const valid = await comparePassword(currentPassword, admin.passwordHash);
+    if (!valid) { res.status(400).json({ error: "Current password is incorrect" }); return; }
+    updates.passwordHash = await hashPassword(newPassword);
+  }
+
+  if (Object.keys(updates).length === 0) {
+    res.json({ message: "No changes made" });
+    return;
+  }
+
+  const [u] = await db.update(usersTable).set(updates).where(eq(usersTable.id, requesterId)).returning();
+  res.json({
+    id: u.id, username: u.username, email: u.email, role: u.role, status: u.status,
+    balance: parseFloat(u.balance), createdAt: u.createdAt,
+  });
 });
 
 // ─── Seed 1000 demo users ────────────────────────────────────────────────────

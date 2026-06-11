@@ -3,12 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { customFetch } from "@workspace/api-client-react/custom-fetch";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Server, Save, Loader2, ShieldCheck, AlertCircle } from "lucide-react";
+import { Mail, Server, Save, Loader2, ShieldCheck, AlertCircle, User, Lock } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 type MailSettings = {
   smtpHost: string;
@@ -32,9 +32,21 @@ const defaults: MailSettings = {
 
 export default function AdminSettings() {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<MailSettings>(defaults);
+
+  const [profileEmail, setProfileEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  useEffect(() => {
+    if (currentUser?.email) setProfileEmail(currentUser.email);
+  }, [currentUser]);
 
   useEffect(() => {
     customFetch<MailSettings>("/api/admin/mail-settings")
@@ -62,13 +74,117 @@ export default function AdminSettings() {
     }
   };
 
+  const handleSaveProfile = async () => {
+    if (newPassword && newPassword !== confirmPassword) {
+      toast({ variant: "destructive", title: "Passwords don't match" });
+      return;
+    }
+    if (newPassword && newPassword.length < 6) {
+      toast({ variant: "destructive", title: "Password too short", description: "New password must be at least 6 characters." });
+      return;
+    }
+
+    setSavingProfile(true);
+    try {
+      const body: Record<string, string> = {};
+      if (profileEmail && profileEmail !== currentUser?.email) body.email = profileEmail;
+      if (newPassword) { body.currentPassword = currentPassword; body.newPassword = newPassword; }
+
+      if (Object.keys(body).length === 0) {
+        toast({ title: "No changes to save" });
+        setSavingProfile(false);
+        return;
+      }
+
+      await customFetch("/api/admin/profile", {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
+      toast({ title: "Profile updated", description: "Your admin profile has been saved." });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Update failed", description: err?.message ?? "Could not update profile." });
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6 max-w-3xl">
         <div>
           <h1 className="text-3xl font-display font-bold">Settings</h1>
-          <p className="text-muted-foreground">Configure platform settings and mail server.</p>
+          <p className="text-muted-foreground">Configure platform settings, mail server, and your admin profile.</p>
         </div>
+
+        {/* My Account */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" />
+              My Account
+            </CardTitle>
+            <CardDescription>Update your admin email address and password.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="space-y-1.5">
+              <Label>Email Address</Label>
+              <Input
+                type="email"
+                value={profileEmail}
+                onChange={(e) => setProfileEmail(e.target.value)}
+                placeholder="admin@example.com"
+              />
+            </div>
+
+            <div className="pt-2 border-t">
+              <div className="flex items-center gap-2 mb-3">
+                <Lock className="w-4 h-4 text-muted-foreground" />
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Change Password</p>
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label>Current Password</Label>
+                  <Input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>New Password</Label>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="New password"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Confirm New Password</Label>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repeat new password"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button onClick={handleSaveProfile} disabled={savingProfile} className="gap-2">
+                {savingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {savingProfile ? "Saving…" : "Save Profile"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {loading ? (
           <div className="flex justify-center py-16">

@@ -7,12 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Ban, ShieldCheck, Wallet, Activity, Mail, Globe, Clock, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
+
+const MAIN_ADMIN_ID = 1;
 
 export default function AdminUserDetail() {
   const { id } = useParams();
   const userId = Number(id);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
 
   const { data: user, isLoading } = useGetAdminUser(userId, {
     query: {
@@ -22,6 +26,8 @@ export default function AdminUserDetail() {
   });
 
   const updateUser = useUpdateAdminUser();
+
+  const isProtected = userId === MAIN_ADMIN_ID && currentUser?.id !== MAIN_ADMIN_ID;
 
   const handleStatusToggle = async () => {
     if (!user) return;
@@ -54,12 +60,14 @@ export default function AdminUserDetail() {
             <h1 className="text-3xl font-display font-bold">User Details</h1>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant={user.status === 'banned' ? "default" : "destructive"} 
-              onClick={handleStatusToggle}
-            >
-              {user.status === 'banned' ? <><ShieldCheck className="w-4 h-4 mr-2" /> Unban</> : <><Ban className="w-4 h-4 mr-2" /> Ban User</>}
-            </Button>
+            {!isProtected && (
+              <Button
+                variant={user.status === 'banned' ? "default" : "destructive"}
+                onClick={handleStatusToggle}
+              >
+                {user.status === 'banned' ? <><ShieldCheck className="w-4 h-4 mr-2" /> Unban</> : <><Ban className="w-4 h-4 mr-2" /> Ban User</>}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -72,11 +80,14 @@ export default function AdminUserDetail() {
                 </div>
                 <h2 className="text-2xl font-bold">{user.username}</h2>
                 <p className="text-muted-foreground">{user.email}</p>
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
                   <Badge variant={user.status === 'banned' ? 'destructive' : 'default'} className={user.status === 'active' ? 'bg-green-500' : ''}>
                     {user.status}
                   </Badge>
                   <Badge variant="outline" className="capitalize">{user.role}</Badge>
+                  {userId === MAIN_ADMIN_ID && (
+                    <Badge variant="outline" className="border-yellow-500 text-yellow-500">Main Admin</Badge>
+                  )}
                 </div>
               </div>
 
