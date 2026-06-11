@@ -16,6 +16,11 @@ export interface Network {
   postbackUrl: string;
   /** @nullable */
   secretKey?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 100
+     */
+  payoutPercent: number;
   totalConversions: number;
   totalRevenue: number;
 }

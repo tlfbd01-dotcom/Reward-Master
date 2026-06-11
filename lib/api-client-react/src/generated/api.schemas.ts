@@ -373,6 +373,11 @@ export interface Network {
   postbackUrl: string;
   /** @nullable */
   secretKey?: string | null;
+  /**
+     * @minimum 1
+     * @maximum 100
+     */
+  payoutPercent: number;
   totalConversions: number;
   totalRevenue: number;
 }
@@ -383,6 +388,11 @@ export interface NetworkInput {
   logoUrl?: string;
   secretKey?: string;
   isActive?: boolean;
+  /**
+     * @minimum 1
+     * @maximum 100
+     */
+  payoutPercent?: number;
 }
 
 export interface NetworkUpdate {
@@ -390,6 +400,11 @@ export interface NetworkUpdate {
   logoUrl?: string;
   secretKey?: string;
   isActive?: boolean;
+  /**
+     * @minimum 1
+     * @maximum 100
+     */
+  payoutPercent?: number;
 }
 
 export interface AdminStats {

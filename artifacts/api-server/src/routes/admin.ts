@@ -373,6 +373,7 @@ function serializeNetwork(n: typeof networksTable.$inferSelect) {
     isActive: n.isActive,
     postbackUrl: `/api/postback?network=${n.slug}&subid={user_id}&amount={payout}&txid={txid}&status=approved`,
     secretKey: n.secretKey,
+    payoutPercent: n.payoutPercent,
     pullEnabled: n.pullEnabled,
     apiKey: n.apiKey,
     pubId: n.pubId,
@@ -391,12 +392,15 @@ router.get("/admin/networks", requireAdmin, async (_req, res): Promise<void> => 
 });
 
 router.post("/admin/networks", requireAdmin, async (req, res): Promise<void> => {
-  const { name, slug, logoUrl, secretKey, isActive, pullEnabled, apiKey, pubId, appId, pullUrl } = req.body;
+  const { name, slug, logoUrl, secretKey, isActive, pullEnabled, apiKey, pubId, appId, pullUrl, payoutPercent } = req.body;
   if (!name || !slug) { res.status(400).json({ error: "name and slug are required" }); return; }
+
+  const pct = typeof payoutPercent === "number" ? Math.min(100, Math.max(1, Math.round(payoutPercent))) : 100;
 
   const [n] = await db.insert(networksTable).values({
     name, slug, logoUrl: logoUrl ?? null, secretKey: secretKey ?? null,
     isActive: isActive ?? true,
+    payoutPercent: pct,
     pullEnabled: pullEnabled ?? false,
     apiKey: apiKey ?? null, pubId: pubId ?? null,
     appId: appId ?? null, pullUrl: pullUrl ?? null,
@@ -410,7 +414,7 @@ router.patch("/admin/networks/:id", requireAdmin, async (req, res): Promise<void
   const id = parseInt(rawId, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
-  const { name, logoUrl, secretKey, isActive, pullEnabled, apiKey, pubId, appId, pullUrl } = req.body;
+  const { name, logoUrl, secretKey, isActive, pullEnabled, apiKey, pubId, appId, pullUrl, payoutPercent } = req.body;
   const updates: Partial<typeof networksTable.$inferInsert> = {};
   if (name !== undefined) updates.name = name;
   if (logoUrl !== undefined) updates.logoUrl = logoUrl;
@@ -421,6 +425,7 @@ router.patch("/admin/networks/:id", requireAdmin, async (req, res): Promise<void
   if (pubId !== undefined) updates.pubId = pubId;
   if (appId !== undefined) updates.appId = appId;
   if (pullUrl !== undefined) updates.pullUrl = pullUrl;
+  if (payoutPercent !== undefined) updates.payoutPercent = Math.min(100, Math.max(1, Math.round(Number(payoutPercent))));
 
   const [n] = await db.update(networksTable).set(updates).where(eq(networksTable.id, id)).returning();
   if (!n) { res.status(404).json({ error: "Network not found" }); return; }

@@ -10,6 +10,7 @@ router.get("/networks", async (_req, res): Promise<void> => {
     isActive: n.isActive,
     postbackUrl: `/api/postback?network=${n.slug}&subid={user_id}&amount={payout}&txid={txid}&status=approved`,
     secretKey: null,
+    payoutPercent: n.payoutPercent,
     totalConversions: n.totalConversions,
     totalRevenue: parseFloat(n.totalRevenue),
   })));

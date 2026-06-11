@@ -11,4 +11,9 @@ export interface NetworkUpdate {
   logoUrl?: string;
   secretKey?: string;
   isActive?: boolean;
+  /**
+     * @minimum 1
+     * @maximum 100
+     */
+  payoutPercent?: number;
 }

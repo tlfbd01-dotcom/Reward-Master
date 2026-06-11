@@ -17,6 +17,7 @@ export const networksTable = pgTable("networks", {
   pullUrl: text("pull_url"),
   lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
   syncedOfferCount: integer("synced_offer_count").notNull().default(0),
+  payoutPercent: integer("payout_percent").notNull().default(100),
   totalConversions: integer("total_conversions").notNull().default(0),
   totalRevenue: decimal("total_revenue", { precision: 10, scale: 2 }).notNull().default("0"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

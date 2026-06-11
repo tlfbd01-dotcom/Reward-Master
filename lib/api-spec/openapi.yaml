@@ -1348,7 +1348,7 @@ components:
     # Networks
     Network:
       type: object
-      required: [id, name, slug, isActive, postbackUrl, totalConversions, totalRevenue]
+      required: [id, name, slug, isActive, postbackUrl, payoutPercent, totalConversions, totalRevenue]
       properties:
         id:
           type: integer
@@ -1364,6 +1364,10 @@ components:
           type: string
         secretKey:
           type: ["string", "null"]
+        payoutPercent:
+          type: integer
+          minimum: 1
+          maximum: 100
         totalConversions:
           type: integer
         totalRevenue:
@@ -1383,6 +1387,10 @@ components:
           type: string
         isActive:
           type: boolean
+        payoutPercent:
+          type: integer
+          minimum: 1
+          maximum: 100
 
     NetworkUpdate:
       type: object
@@ -1395,6 +1403,10 @@ components:
           type: string
         isActive:
           type: boolean
+        payoutPercent:
+          type: integer
+          minimum: 1
+          maximum: 100
 
     # Admin
     AdminStats:

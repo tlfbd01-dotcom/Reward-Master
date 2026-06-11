@@ -28,8 +28,15 @@ router.get("/postback", async (req, res): Promise<void> => {
   const existing = await db.select().from(conversionsTable).where(eq(conversionsTable.txid, txid));
   if (existing.length > 0) { res.send("OK"); return; }
 
-  const payoutAmount = parseFloat(amount);
-  if (isNaN(payoutAmount) || payoutAmount <= 0) { res.status(400).json({ error: "Invalid amount" }); return; }
+  const rawPayout = parseFloat(amount);
+  if (isNaN(rawPayout) || rawPayout <= 0) { res.status(400).json({ error: "Invalid amount" }); return; }
+
+  // Apply network payout percentage
+  const networkRows = await db.select({ payoutPercent: networksTable.payoutPercent })
+    .from(networksTable).where(eq(networksTable.slug, network));
+  const payoutPct = networkRows.length > 0 ? networkRows[0].payoutPercent : 100;
+  const payoutAmount = Math.round(rawPayout * (payoutPct / 100) * 100) / 100;
+  if (payoutAmount <= 0) { res.status(400).json({ error: "Payout is zero after applying network percentage" }); return; }
 
   const ip = req.ip ?? req.socket.remoteAddress ?? null;
 

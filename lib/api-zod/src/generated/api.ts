@@ -427,6 +427,10 @@ export const DeleteApiKeyParams = zod.object({
 /**
  * @summary Get offerwall networks
  */
+export const getNetworksResponsePayoutPercentMax = 100;
+
+
+
 export const GetNetworksResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
@@ -435,6 +439,7 @@ export const GetNetworksResponseItem = zod.object({
   "isActive": zod.boolean(),
   "postbackUrl": zod.string(),
   "secretKey": zod.string().nullish(),
+  "payoutPercent": zod.number().min(1).max(getNetworksResponsePayoutPercentMax),
   "totalConversions": zod.number(),
   "totalRevenue": zod.number()
 })
@@ -767,6 +772,10 @@ export const GetAdminRevenueResponse = zod.array(GetAdminRevenueResponseItem)
 /**
  * @summary Get all offerwall networks (admin)
  */
+export const getAdminNetworksResponsePayoutPercentMax = 100;
+
+
+
 export const GetAdminNetworksResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
@@ -775,6 +784,7 @@ export const GetAdminNetworksResponseItem = zod.object({
   "isActive": zod.boolean(),
   "postbackUrl": zod.string(),
   "secretKey": zod.string().nullish(),
+  "payoutPercent": zod.number().min(1).max(getAdminNetworksResponsePayoutPercentMax),
   "totalConversions": zod.number(),
   "totalRevenue": zod.number()
 })
@@ -784,12 +794,17 @@ export const GetAdminNetworksResponse = zod.array(GetAdminNetworksResponseItem)
 /**
  * @summary Create/configure a network (admin)
  */
+export const createAdminNetworkBodyPayoutPercentMax = 100;
+
+
+
 export const CreateAdminNetworkBody = zod.object({
   "name": zod.string(),
   "slug": zod.string(),
   "logoUrl": zod.string().optional(),
   "secretKey": zod.string().optional(),
-  "isActive": zod.boolean().optional()
+  "isActive": zod.boolean().optional(),
+  "payoutPercent": zod.number().min(1).max(createAdminNetworkBodyPayoutPercentMax).optional()
 })
 
 
@@ -800,12 +815,21 @@ export const UpdateAdminNetworkParams = zod.object({
   "id": zod.coerce.number()
 })
 
+export const updateAdminNetworkBodyPayoutPercentMax = 100;
+
+
+
 export const UpdateAdminNetworkBody = zod.object({
   "name": zod.string().optional(),
   "logoUrl": zod.string().optional(),
   "secretKey": zod.string().optional(),
-  "isActive": zod.boolean().optional()
+  "isActive": zod.boolean().optional(),
+  "payoutPercent": zod.number().min(1).max(updateAdminNetworkBodyPayoutPercentMax).optional()
 })
+
+export const updateAdminNetworkResponsePayoutPercentMax = 100;
+
+
 
 export const UpdateAdminNetworkResponse = zod.object({
   "id": zod.number(),
@@ -815,6 +839,7 @@ export const UpdateAdminNetworkResponse = zod.object({
   "isActive": zod.boolean(),
   "postbackUrl": zod.string(),
   "secretKey": zod.string().nullish(),
+  "payoutPercent": zod.number().min(1).max(updateAdminNetworkResponsePayoutPercentMax),
   "totalConversions": zod.number(),
   "totalRevenue": zod.number()
 })

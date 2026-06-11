@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
-import { Plus, Link as LinkIcon, Edit, Key, RefreshCw, Check, X, Loader2, Zap, Copy, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Link as LinkIcon, Edit, Key, RefreshCw, Check, X, Loader2, Zap, Copy, ChevronDown, ChevronUp, Percent } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -21,6 +21,7 @@ import { customFetch } from "@workspace/api-client-react/custom-fetch";
 type Network = {
   id: number; name: string; slug: string; logoUrl: string | null;
   isActive: boolean; postbackUrl: string; secretKey: string | null;
+  payoutPercent: number;
   pullEnabled: boolean; apiKey: string | null; pubId: string | null;
   appId: string | null; pullUrl: string | null;
   lastSyncedAt: string | null; syncedOfferCount: number;
@@ -29,6 +30,7 @@ type Network = {
 
 type FormData = {
   name: string; slug: string; logoUrl: string; secretKey: string;
+  payoutPercent: number;
   pullEnabled: boolean; apiKey: string; pubId: string; appId: string; pullUrl: string;
 };
 
@@ -38,6 +40,7 @@ type TestPostbackForm = {
 
 const defaultForm: FormData = {
   name: "", slug: "", logoUrl: "", secretKey: "",
+  payoutPercent: 100,
   pullEnabled: false, apiKey: "", pubId: "", appId: "", pullUrl: "",
 };
 
@@ -99,6 +102,7 @@ export default function AdminNetworks() {
     setEditingNetwork(n);
     setFormData({
       name: n.name, slug: n.slug, logoUrl: n.logoUrl ?? "", secretKey: n.secretKey ?? "",
+      payoutPercent: n.payoutPercent ?? 100,
       pullEnabled: n.pullEnabled, apiKey: n.apiKey ?? "", pubId: n.pubId ?? "",
       appId: n.appId ?? "", pullUrl: n.pullUrl ?? "",
     });
@@ -124,6 +128,7 @@ export default function AdminNetworks() {
       name: formData.name,
       logoUrl: formData.logoUrl || null,
       secretKey: formData.secretKey || null,
+      payoutPercent: Math.min(100, Math.max(1, Number(formData.payoutPercent) || 100)),
       pullEnabled: formData.pullEnabled,
       apiKey: formData.apiKey || null,
       pubId: formData.pubId || null,
@@ -261,7 +266,7 @@ export default function AdminNetworks() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3 py-2 border-y">
+                  <div className="grid grid-cols-3 gap-3 py-2 border-y">
                     <div>
                       <div className="text-xs text-muted-foreground">Conversions</div>
                       <div className="font-bold text-lg">{network.totalConversions}</div>
@@ -269,6 +274,14 @@ export default function AdminNetworks() {
                     <div>
                       <div className="text-xs text-muted-foreground">Revenue</div>
                       <div className="font-bold text-lg text-primary">${network.totalRevenue.toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Percent className="w-3 h-3" /> User Gets
+                      </div>
+                      <div className={`font-bold text-lg ${(network.payoutPercent ?? 100) < 100 ? "text-amber-400" : "text-green-500"}`}>
+                        {network.payoutPercent ?? 100}%
+                      </div>
                     </div>
                   </div>
 
@@ -361,6 +374,42 @@ export default function AdminNetworks() {
               <div className="space-y-1.5">
                 <Label className="flex items-center gap-2"><Key className="w-4 h-4" /> Postback Secret Key <span className="text-muted-foreground">(optional)</span></Label>
                 <Input value={formData.secretKey} onChange={e => setField("secretKey", e.target.value)} placeholder="For postback signature verification" />
+              </div>
+
+              {/* Payout Percentage */}
+              <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
+                <Label className="flex items-center gap-2 font-semibold">
+                  <Percent className="w-4 h-4 text-primary" /> User Payout Percentage
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  What percentage of the network's offer payout users receive. e.g. set 50% → a $1.00 offer credits the user $0.50.
+                </p>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min={1}
+                    max={100}
+                    step={1}
+                    value={formData.payoutPercent}
+                    onChange={e => setField("payoutPercent", Number(e.target.value))}
+                    className="flex-1 accent-primary"
+                  />
+                  <div className="flex items-center gap-1 bg-background border rounded-lg px-3 py-1.5 min-w-[70px] justify-center">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={formData.payoutPercent}
+                      onChange={e => setField("payoutPercent", Math.min(100, Math.max(1, Number(e.target.value) || 1)))}
+                      className="border-0 p-0 h-auto w-10 text-center font-bold text-primary bg-transparent focus-visible:ring-0"
+                    />
+                    <span className="text-sm font-bold text-muted-foreground">%</span>
+                  </div>
+                </div>
+                <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
+                  <span>1% (max margin)</span>
+                  <span className={formData.payoutPercent === 100 ? "text-green-500 font-semibold" : ""}>100% (pass-through)</span>
+                </div>
               </div>
             </div>
 
