@@ -293,4 +293,18 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* Site-wide background image at 20% opacity */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url('/bg-cards.png');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    opacity: 0.08;
+    z-index: -1;
+    pointer-events: none;
+  }
 }
