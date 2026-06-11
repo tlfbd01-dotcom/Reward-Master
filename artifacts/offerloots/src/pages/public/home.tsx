@@ -120,7 +120,7 @@ export default function Home() {
   return (
     <PublicLayout>
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-background pt-16 md:pt-24 pb-32">
+      <section className="relative overflow-hidden pt-16 md:pt-24 pb-32">
         {/* Background blobs */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1200px] h-[600px] opacity-25 pointer-events-none">
           <div className="absolute top-20 left-10 w-96 h-96 bg-primary rounded-full mix-blend-multiply filter blur-[120px]" />
@@ -213,7 +213,7 @@ export default function Home() {
       </section>
 
       {/* Featured Offers */}
-      <section className="py-24 bg-background">
+      <section className="py-24">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-end justify-between mb-12">
             <div>
@@ -273,7 +273,7 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section className="py-24 bg-card border-t">
+      <section className="py-24 bg-card/70 border-t">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">How OfferLoots Works</h2>

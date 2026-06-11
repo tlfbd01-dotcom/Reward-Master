@@ -516,6 +516,12 @@ export default function Earn() {
                           </span>
                           {/* Name */}
                           <p className="text-[10px] leading-tight font-medium line-clamp-2 text-foreground/90 mt-0.5">{offer.name}</p>
+                          {/* Device label */}
+                          {offer.device && offer.device !== "all" && (
+                            <span className="text-[8px] text-muted-foreground/70 leading-none">
+                              {offer.device === "mobile" ? "📱 Mobile" : "🖥 Desktop"}
+                            </span>
+                          )}
                           {/* Payout */}
                           <div className={`text-[11px] font-bold mt-auto ${payoutColor}`}>${offer.payout.toFixed(2)}</div>
                         </div>

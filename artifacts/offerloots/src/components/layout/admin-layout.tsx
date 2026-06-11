@@ -47,7 +47,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-[100dvh] flex w-full bg-background selection:bg-primary/30">
+      <div className="min-h-[100dvh] flex w-full bg-background/80 selection:bg-primary/30">
         <Sidebar className="border-r border-border bg-card">
           <SidebarHeader className="p-4 border-b">
             <Link href="/" className="flex items-center gap-2">
