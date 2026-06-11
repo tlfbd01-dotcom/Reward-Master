@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { syncAllEnabledNetworks } from "./services/offer-sync";
 
 const rawPort = process.env["PORT"];
 
@@ -22,4 +23,19 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  // Auto-sync enabled networks every 15 minutes
+  const SYNC_INTERVAL_MS = 15 * 60 * 1000;
+  const runSync = async () => {
+    try {
+      await syncAllEnabledNetworks();
+    } catch (err) {
+      logger.error({ err }, "Offer auto-sync failed");
+    }
+  };
+  // First sync 30 s after boot, then every 15 min
+  setTimeout(() => {
+    void runSync();
+    setInterval(() => void runSync(), SYNC_INTERVAL_MS);
+  }, 30_000);
 });

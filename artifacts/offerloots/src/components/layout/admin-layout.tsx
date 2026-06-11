@@ -11,11 +11,12 @@ import {
   Network, 
   Key, 
   LogOut,
-  Gem,
   ArrowLeft,
   Layers
 } from "lucide-react";
 import { useLogout } from "@workspace/api-client-react";
+
+const logoSrc = "/logo.png";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
@@ -49,9 +50,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <div className="min-h-[100dvh] flex w-full bg-background selection:bg-primary/30">
         <Sidebar className="border-r border-border bg-card">
           <SidebarHeader className="p-4 border-b">
-            <Link href="/" className="flex items-center gap-2 text-primary">
-              <Gem className="h-6 w-6 text-accent" />
-              <span className="font-display font-bold text-xl tracking-tight text-foreground">OfferLoots Admin</span>
+            <Link href="/" className="flex items-center gap-2">
+              <img src={logoSrc} alt="OfferLoots" className="h-9 w-auto" />
+              <span className="font-display font-bold text-sm text-muted-foreground">Admin</span>
             </Link>
           </SidebarHeader>
           <SidebarContent>

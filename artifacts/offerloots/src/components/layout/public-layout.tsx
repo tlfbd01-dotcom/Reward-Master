@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { Gem, LogIn, Menu, UserPlus, LogOut, Moon, Sun } from "lucide-react";
+import { LogIn, Menu, UserPlus, LogOut, Moon, Sun } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/theme-provider";
 import { useLogout } from "@workspace/api-client-react";
+
+const logoSrc = "/logo.png";
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user, logout: clearAuth } = useAuth();
@@ -33,9 +35,8 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-[100dvh] flex flex-col bg-background selection:bg-primary/30">
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-primary">
-            <Gem className="h-6 w-6" />
-            <span className="font-display font-bold text-xl tracking-tight text-foreground">OfferLoots</span>
+          <Link href="/" className="flex items-center">
+            <img src={logoSrc} alt="OfferLoots" className="h-10 w-auto" />
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
@@ -122,9 +123,8 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
-              <Link href="/" className="flex items-center gap-2 text-primary mb-4">
-                <Gem className="h-6 w-6" />
-                <span className="font-display font-bold text-xl tracking-tight text-foreground">OfferLoots</span>
+              <Link href="/" className="flex items-center mb-4">
+                <img src={logoSrc} alt="OfferLoots" className="h-10 w-auto" />
               </Link>
               <p className="text-muted-foreground text-sm max-w-sm">
                 The highest-paying rewards platform. Complete surveys, play games, and watch videos to earn real cash. Fast withdrawals via PayPal, Crypto, and more.

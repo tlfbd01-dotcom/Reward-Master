@@ -112,7 +112,7 @@ export default function Earn() {
   const [activeWall, setActiveWall] = useState<Wall | null>(null);
 
   const { data: networksData } = useGetNetworks();
-  const queryParams: any = { page, limit: 24 };
+  const queryParams: any = { page, limit: 15 };
   if (network !== "all") queryParams.network = network;
   if (device !== "all") queryParams.device = device;
   const { data: offersData, isLoading } = useGetOffers(queryParams);

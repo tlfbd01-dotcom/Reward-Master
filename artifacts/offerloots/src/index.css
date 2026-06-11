@@ -71,67 +71,63 @@
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
-
   --opaque-button-border-intensity: -8;
-
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  /* Light Theme: Clean, professional with green/gold accents */
-  --background: 0 0% 98%;
-  --foreground: 240 10% 10%;
+  --background: 220 30% 97%;
+  --foreground: 225 25% 12%;
 
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 142.1 70.6% 45.3%;
+  --border: 220 20% 88%;
+  --input: 220 20% 88%;
+  --ring: 138 72% 42%;
 
   --card: 0 0% 100%;
-  --card-foreground: 240 10% 10%;
-  --card-border: 240 5.9% 90%;
+  --card-foreground: 225 25% 12%;
+  --card-border: 220 20% 88%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 10%;
-  --popover-border: 240 5.9% 90%;
+  --popover-foreground: 225 25% 12%;
+  --popover-border: 220 20% 88%;
 
-  /* High energy green */
-  --primary: 142.1 76.2% 36.3%;
-  --primary-foreground: 355.7 100% 97.3%;
+  /* Vivid lime-green */
+  --primary: 138 72% 38%;
+  --primary-foreground: 0 0% 100%;
 
-  /* Subtle dark gray */
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
+  --secondary: 220 20% 93%;
+  --secondary-foreground: 225 25% 12%;
 
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
+  --muted: 220 20% 93%;
+  --muted-foreground: 220 10% 48%;
 
-  /* Gold accent */
-  --accent: 47.9 95.8% 53.1%;
-  --accent-foreground: 26 83.3% 14.1%;
+  /* Bright gold */
+  --accent: 45 96% 52%;
+  --accent-foreground: 30 80% 15%;
 
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive: 0 84% 58%;
+  --destructive-foreground: 0 0% 100%;
 
-  --sidebar: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-border: 240 5.9% 90%;
-  --sidebar-primary: 142.1 76.2% 36.3%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 240 4.8% 95.9%;
-  --sidebar-accent-foreground: 240 5.9% 10%;
-  --sidebar-ring: 142.1 70.6% 45.3%;
+  --sidebar: 225 35% 95%;
+  --sidebar-foreground: 225 25% 20%;
+  --sidebar-border: 220 20% 88%;
+  --sidebar-primary: 138 72% 38%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 20% 90%;
+  --sidebar-accent-foreground: 225 25% 12%;
+  --sidebar-ring: 138 72% 42%;
 
-  --chart-1: 142 76% 36%;
-  --chart-2: 48 96% 53%;
-  --chart-3: 199 89% 48%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  --chart-1: 138 72% 42%;
+  --chart-2: 45 96% 52%;
+  --chart-3: 210 90% 55%;
+  --chart-4: 280 70% 58%;
+  --chart-5: 340 78% 55%;
 
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: 'JetBrains Mono', Menlo, monospace;
   --app-font-display: 'Clash Display', 'Inter', sans-serif;
 
-  --radius: 0.5rem;
+  --radius: 0.625rem;
 }
 
 .dark {
@@ -141,53 +137,53 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  /* Dark Theme: Casino floor vibe - deep rich dark background */
-  --background: 222 47% 11%;
+  /* Rich deep blue-violet background — more colorful than plain black */
+  --background: 232 44% 10%;
   --foreground: 210 40% 98%;
 
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
-  --ring: 142.1 70.6% 45.3%;
+  --border: 230 30% 18%;
+  --input: 230 30% 18%;
+  --ring: 138 72% 50%;
 
-  --card: 222 47% 14%;
+  --card: 232 44% 13%;
   --card-foreground: 210 40% 98%;
-  --card-border: 217 33% 17%;
+  --card-border: 230 30% 20%;
 
-  --popover: 222 47% 11%;
+  --popover: 232 44% 10%;
   --popover-foreground: 210 40% 98%;
-  --popover-border: 217 33% 17%;
+  --popover-border: 230 30% 20%;
 
-  /* High energy green */
-  --primary: 142.1 70.6% 45.3%;
-  --primary-foreground: 144.9 80.4% 10%;
+  /* Bright vivid green — matches logo */
+  --primary: 138 72% 50%;
+  --primary-foreground: 138 60% 8%;
 
-  --secondary: 217 33% 17%;
+  --secondary: 230 30% 18%;
   --secondary-foreground: 210 40% 98%;
 
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 230 30% 18%;
+  --muted-foreground: 215 18% 60%;
 
-  /* Bright Gold accent */
-  --accent: 47.9 95.8% 53.1%;
-  --accent-foreground: 26 83.3% 14.1%;
+  /* Bright gold accent */
+  --accent: 45 96% 55%;
+  --accent-foreground: 30 80% 12%;
 
-  --destructive: 0 62.8% 30.6%;
+  --destructive: 0 70% 48%;
   --destructive-foreground: 210 40% 98%;
 
-  --sidebar: 222 47% 11%;
-  --sidebar-foreground: 215 20.2% 65.1%;
-  --sidebar-border: 217 33% 17%;
-  --sidebar-primary: 142.1 70.6% 45.3%;
-  --sidebar-primary-foreground: 144.9 80.4% 10%;
-  --sidebar-accent: 217 33% 17%;
+  --sidebar: 232 44% 8%;
+  --sidebar-foreground: 215 18% 68%;
+  --sidebar-border: 230 30% 16%;
+  --sidebar-primary: 138 72% 50%;
+  --sidebar-primary-foreground: 138 60% 8%;
+  --sidebar-accent: 230 30% 16%;
   --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 142.1 70.6% 45.3%;
+  --sidebar-ring: 138 72% 50%;
 
-  --chart-1: 142 70% 45%;
-  --chart-2: 48 96% 53%;
-  --chart-3: 199 89% 48%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  --chart-1: 138 72% 50%;
+  --chart-2: 45 96% 55%;
+  --chart-3: 210 90% 60%;
+  --chart-4: 280 70% 62%;
+  --chart-5: 340 78% 58%;
 }
 
 @layer base {
@@ -269,5 +265,28 @@
   .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
+  }
+
+  /* Colorful gradient utilities */
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(138 72% 42%) 0%, hsl(180 72% 38%) 100%);
+  }
+
+  .gradient-gold {
+    background: linear-gradient(135deg, hsl(45 96% 52%) 0%, hsl(32 96% 52%) 100%);
+  }
+
+  .text-gradient-green {
+    background: linear-gradient(90deg, hsl(138 72% 50%), hsl(170 72% 45%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(90deg, hsl(45 96% 55%), hsl(32 96% 55%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }

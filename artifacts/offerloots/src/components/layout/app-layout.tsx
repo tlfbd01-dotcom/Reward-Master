@@ -2,8 +2,10 @@ import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, 
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Coins, ArrowDownToLine, History, Users, Settings, Trophy, LogOut, Gem } from "lucide-react";
+import { LayoutDashboard, Coins, ArrowDownToLine, History, Users, Settings, Trophy, LogOut } from "lucide-react";
 import { useLogout } from "@workspace/api-client-react";
+
+const logoSrc = "/logo.png";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
@@ -36,9 +38,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="min-h-[100dvh] flex w-full bg-background selection:bg-primary/30">
         <Sidebar className="border-r border-border bg-card">
           <SidebarHeader className="p-4 border-b">
-            <Link href="/" className="flex items-center gap-2 text-primary">
-              <Gem className="h-6 w-6" />
-              <span className="font-display font-bold text-xl tracking-tight text-foreground">OfferLoots</span>
+            <Link href="/" className="flex items-center">
+              <img src={logoSrc} alt="OfferLoots" className="h-9 w-auto" />
             </Link>
           </SidebarHeader>
           <SidebarContent>
