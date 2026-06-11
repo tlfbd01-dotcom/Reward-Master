@@ -5,10 +5,8 @@ import { requireAuth, requireAdmin } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
-function buildWallUrl(template: string, placementId: string, userId: number): string {
-  return template
-    .replace(/\{PLACEMENT_ID\}/g, placementId)
-    .replace(/\{USER_ID\}/g, String(userId));
+function buildWallUrl(template: string, userId: number): string {
+  return template.replace(/\{userid\}/gi, String(userId));
 }
 
 function serializeWall(w: typeof wallsTable.$inferSelect, userId?: number) {
@@ -25,7 +23,7 @@ function serializeWall(w: typeof wallsTable.$inferSelect, userId?: number) {
     placementId: w.placementId,
     totalConversions: w.totalConversions,
     totalRevenue: parseFloat(w.totalRevenue),
-    iframeUrl: userId != null ? buildWallUrl(w.urlTemplate, w.placementId, userId) : null,
+    iframeUrl: userId != null ? buildWallUrl(w.urlTemplate, userId) : null,
   };
 }
 

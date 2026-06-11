@@ -95,10 +95,7 @@ router.get("/offers/:id/click", requireAuth, async (req, res): Promise<void> => 
     return;
   }
 
-  const finalUrl = offer.offerUrl
-    .replace(/\{USER_ID\}/g, String(userId))
-    .replace(/\{user_id\}/g, String(userId))
-    .replace(/userId=\{[^}]+\}/g, `userId=${userId}`);
+  const finalUrl = offer.offerUrl.replace(/\{userid\}/gi, String(userId));
 
   res.json({ url: finalUrl });
 });

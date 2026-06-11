@@ -223,61 +223,59 @@ export default function Earn() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                   {offersData?.data.map((offer: any) => {
                     const hasEvents = offer.events && offer.events.length > 0;
                     return (
-                      <Card key={offer.id} className="h-full hover:shadow-lg transition-all hover:border-primary/50 group flex flex-col overflow-hidden">
+                      <Card key={offer.id} className="hover:shadow-md transition-all hover:border-primary/50 group flex flex-col overflow-hidden">
                         <Link href={`/earn/${offer.id}`} className="flex-1 flex flex-col">
-                          <div className="aspect-video bg-muted/30 relative flex items-center justify-center p-4">
+                          <div className="aspect-video bg-muted/30 relative flex items-center justify-center p-2">
                             {offer.imageUrl ? (
                               <img src={offer.imageUrl} alt={offer.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
                             ) : (
-                              <Gamepad2 className="w-12 h-12 text-muted-foreground/30" />
+                              <Gamepad2 className="w-8 h-8 text-muted-foreground/30" />
                             )}
-                            <div className="absolute top-2 left-2 flex flex-col gap-1">
-                              <Badge variant="secondary" className="bg-background/80 backdrop-blur text-[10px]">{offer.network}</Badge>
+                            <div className="absolute top-1.5 left-1.5 flex flex-col gap-0.5">
+                              <Badge variant="secondary" className="bg-background/80 backdrop-blur text-[9px] px-1 py-0">{offer.network}</Badge>
                               {hasEvents && (
-                                <Badge variant="outline" className="bg-background/80 backdrop-blur text-[10px] border-primary/50 text-primary">
+                                <Badge variant="outline" className="bg-background/80 backdrop-blur text-[9px] px-1 py-0 border-primary/50 text-primary">
                                   {offer.events.length} events
                                 </Badge>
                               )}
                             </div>
-                            <div className="absolute bottom-2 right-2">
-                              {offer.device === "mobile" && <Smartphone className="w-4 h-4 text-muted-foreground" />}
-                              {offer.device === "desktop" && <Monitor className="w-4 h-4 text-muted-foreground" />}
+                            <div className="absolute bottom-1 right-1">
+                              {offer.device === "mobile" && <Smartphone className="w-3 h-3 text-muted-foreground" />}
+                              {offer.device === "desktop" && <Monitor className="w-3 h-3 text-muted-foreground" />}
                             </div>
                           </div>
-                          <CardContent className="p-4 flex-1 flex flex-col">
-                            <h3 className="font-bold line-clamp-2 mb-2 flex-1 group-hover:text-primary transition-colors text-sm">{offer.name}</h3>
+                          <CardContent className="p-2.5 flex-1 flex flex-col">
+                            <h3 className="font-semibold line-clamp-2 mb-1.5 flex-1 group-hover:text-primary transition-colors text-xs leading-tight">{offer.name}</h3>
                             {hasEvents && (
-                              <div className="mb-2 space-y-0.5">
+                              <div className="mb-1.5 space-y-0.5">
                                 {offer.events.slice(0, 2).map((ev: OfferEvent, i: number) => (
-                                  <div key={i} className="flex items-center justify-between text-xs">
+                                  <div key={i} className="flex items-center justify-between text-[10px]">
                                     <span className="text-muted-foreground line-clamp-1">{ev.name}</span>
                                     <span className="font-bold text-primary shrink-0 ml-1">${ev.payout.toFixed(2)}</span>
                                   </div>
                                 ))}
                                 {offer.events.length > 2 && (
-                                  <p className="text-xs text-muted-foreground">+{offer.events.length - 2} more events</p>
+                                  <p className="text-[10px] text-muted-foreground">+{offer.events.length - 2} more</p>
                                 )}
                               </div>
                             )}
-                            <div className="flex items-center justify-between mt-auto pt-3 border-t">
-                              <div>
-                                <div className="text-lg font-bold text-primary">${offer.payout.toFixed(2)}</div>
-                                {hasEvents && <div className="text-xs text-muted-foreground">total</div>}
-                              </div>
+                            <div className="flex items-center justify-between mt-auto pt-2 border-t">
+                              <div className="text-sm font-bold text-primary">${offer.payout.toFixed(2)}</div>
+                              {hasEvents && <div className="text-[10px] text-muted-foreground">total</div>}
                             </div>
                           </CardContent>
                         </Link>
-                        <div className="px-4 pb-4">
+                        <div className="px-2.5 pb-2.5">
                           <Button
                             size="sm"
-                            className="w-full rounded-full font-bold gap-1"
+                            className="w-full h-7 text-xs rounded-full font-bold gap-1"
                             onClick={() => handleOfferClick(offer.id, offer.offerUrl)}
                           >
-                            Start <ExternalLink className="w-3 h-3" />
+                            Start <ExternalLink className="w-2.5 h-2.5" />
                           </Button>
                         </div>
                       </Card>

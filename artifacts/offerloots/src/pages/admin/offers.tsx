@@ -373,14 +373,15 @@ export default function AdminOffers() {
             <div className="space-y-3">
               <div>
                 <Label className="text-base font-semibold">Click Tracking</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">Use <code className="bg-muted px-1 rounded">&#123;USER_ID&#125;</code> in the URL — it will be replaced with the user's account ID.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Use <code className="bg-muted px-1 rounded">&#123;userid&#125;</code> in the URL — it will be replaced automatically with the user's account ID (1, 2, 3…).</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-1.5">
                   <Label>Offer URL Template</Label>
                   <Input value={form.offerUrl}
                     onChange={e => setForm(f => ({ ...f, offerUrl: e.target.value }))}
-                    placeholder="https://api.gemiwall.com/api/offers/click?offerId=xxx&userId={USER_ID}&placementId=yyy" />
+                    placeholder="https://api.gemiwall.com/api/offers/click?offerId=xxx&userId={userid}&placementId=yyy" />
+                  <p className="text-xs text-muted-foreground">Use <code className="bg-muted px-1 rounded">&#123;userid&#125;</code> where the user's account ID should be inserted.</p>
                 </div>
                 <div className="space-y-1.5">
                   <Label>External Offer ID</Label>

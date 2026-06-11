@@ -260,12 +260,12 @@ export default function AdminWalls() {
               <div className="space-y-1.5">
                 <Label>URL Template *</Label>
                 <Input
-                  placeholder="https://gemiwall.com/{PLACEMENT_ID}/{USER_ID}"
+                  placeholder="https://gemiwall.com/YOUR_PLACEMENT_ID/{userid}"
                   value={form.urlTemplate}
                   onChange={e => setForm(f => ({ ...f, urlTemplate: e.target.value }))}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Use <code className="bg-muted px-1 rounded">&#123;PLACEMENT_ID&#125;</code> and <code className="bg-muted px-1 rounded">&#123;USER_ID&#125;</code> as placeholders.
+                  Put the full URL here with your placement ID embedded. Use <code className="bg-muted px-1 rounded">&#123;userid&#125;</code> wherever the user's ID should go — it will be replaced automatically.
                 </p>
               </div>
 
