@@ -26,9 +26,14 @@ type NotikOffer = {
 };
 
 type NotikPage = {
-  data?: NotikOffer[];
+  data?: NotikOffer[] | { data?: NotikOffer[]; current_page?: number; next_page_url?: string | null; [k: string]: any };
   offers?: NotikOffer[];
+  result?: NotikOffer[];
+  items?: NotikOffer[];
   next_page_url?: string | null;
+  current_page?: number;
+  last_page?: number;
+  [key: string]: any;
 };
 
 function normalizeDevice(raw?: string): "all" | "mobile" | "desktop" {
@@ -78,11 +83,16 @@ async function fetchNotikPage(url: string): Promise<NotikPage> {
 export async function syncNetworkOffers(networkId: number): Promise<{ added: number; updated: number; total: number }> {
   const [network] = await db.select().from(networksTable).where(eq(networksTable.id, networkId));
   if (!network) throw new Error("Network not found");
-  if (!network.pullEnabled || !network.apiKey) throw new Error("Pull not configured for this network");
+  if (!network.pullEnabled) throw new Error("Auto-pull is not enabled for this network. Enable it and set credentials first.");
+  if (!network.apiKey && !network.pubId && !network.appId) throw new Error("No API credentials configured. Please set at least an API Key, Publisher ID, or App ID.");
 
-  // Build start URL
+  // Build start URL — only append params that are set
   const baseUrl = network.pullUrl || "https://notik.me/api/v2/get-offers/all";
-  const startUrl = `${baseUrl}?api_key=${network.apiKey}${network.pubId ? `&pub_id=${network.pubId}` : ""}${network.appId ? `&app_id=${network.appId}` : ""}`;
+  const params = new URLSearchParams();
+  if (network.apiKey) params.set("api_key", network.apiKey);
+  if (network.pubId) params.set("pub_id", network.pubId);
+  if (network.appId) params.set("app_id", network.appId);
+  const startUrl = `${baseUrl}?${params.toString()}`;
 
   let added = 0;
   let updated = 0;
@@ -95,7 +105,31 @@ export async function syncNetworkOffers(networkId: number): Promise<{ added: num
     logger.info({ networkId, page: pageCount, url: nextUrl }, "Syncing offers page");
 
     const page = await fetchNotikPage(nextUrl);
-    const offers = page.data ?? page.offers ?? [];
+
+    // Notik wraps paginated results in a nested object: { data: { data: [...], next_page_url: ... } }
+    // or returns offers directly under data/offers/result/items keys, or as a root array
+    let rawData = page.data;
+    if (rawData && !Array.isArray(rawData) && typeof rawData === "object") {
+      // Nested pagination wrapper — extract the inner array and next_page_url
+      const inner = rawData as { data?: NotikOffer[]; next_page_url?: string | null; [k: string]: any };
+      if (Array.isArray(inner.data)) {
+        // carry the inner next_page_url forward
+        if (inner.next_page_url !== undefined) {
+          (page as any)._inner_next = inner.next_page_url;
+        }
+        rawData = inner.data;
+      } else {
+        rawData = undefined;
+      }
+    }
+
+    const offers: NotikOffer[] = Array.isArray(rawData)
+      ? (rawData as NotikOffer[])
+      : Array.isArray(page.offers) ? page.offers
+      : Array.isArray(page.result) ? page.result
+      : Array.isArray(page.items) ? page.items
+      : Array.isArray(page) ? (page as unknown as NotikOffer[])
+      : [];
 
     for (const o of offers) {
       const externalId = String(o.offer_id ?? "");
@@ -136,7 +170,9 @@ export async function syncNetworkOffers(networkId: number): Promise<{ added: num
       total++;
     }
 
-    nextUrl = page.next_page_url ?? null;
+    nextUrl = (page as any)._inner_next !== undefined
+      ? ((page as any)._inner_next as string | null)
+      : (page.next_page_url ?? null);
 
     // Rate limit guard
     if (nextUrl) await new Promise(r => setTimeout(r, 500));
