@@ -20,6 +20,8 @@ import HowItWorks from "@/pages/public/how-it-works";
 import Dashboard from "@/pages/user/dashboard";
 import Earn from "@/pages/user/earn";
 import EarnDetail from "@/pages/user/earn-detail";
+import EarnOfferwall from "@/pages/user/earn-offerwall";
+import EarnSurvey from "@/pages/user/earn-survey";
 import Withdrawals from "@/pages/user/withdrawals";
 import Transactions from "@/pages/user/transactions";
 import Referrals from "@/pages/user/referrals";
@@ -35,6 +37,7 @@ import AdminConversions from "@/pages/admin/conversions";
 import AdminNetworks from "@/pages/admin/networks";
 import AdminApiKeys from "@/pages/admin/api-keys";
 import AdminWalls from "@/pages/admin/walls";
+import AdminSettings from "@/pages/admin/settings";
 
 function Router() {
   return (
@@ -51,6 +54,8 @@ function Router() {
       {/* Protected User Routes */}
       <Route path="/dashboard"><ProtectedRoute component={Dashboard} /></Route>
       <Route path="/earn"><ProtectedRoute component={Earn} /></Route>
+      <Route path="/earn/offerwall"><ProtectedRoute component={EarnOfferwall} /></Route>
+      <Route path="/earn/survey"><ProtectedRoute component={EarnSurvey} /></Route>
       <Route path="/earn/:id"><ProtectedRoute component={EarnDetail} /></Route>
       <Route path="/withdrawals"><ProtectedRoute component={Withdrawals} /></Route>
       <Route path="/transactions"><ProtectedRoute component={Transactions} /></Route>
@@ -67,6 +72,7 @@ function Router() {
       <Route path="/admin/networks"><ProtectedRoute component={AdminNetworks} adminOnly /></Route>
       <Route path="/admin/api-keys"><ProtectedRoute component={AdminApiKeys} adminOnly /></Route>
       <Route path="/admin/walls"><ProtectedRoute component={AdminWalls} adminOnly /></Route>
+      <Route path="/admin/settings"><ProtectedRoute component={AdminSettings} adminOnly /></Route>
       
       {/* 404 */}
       <Route component={NotFound} />

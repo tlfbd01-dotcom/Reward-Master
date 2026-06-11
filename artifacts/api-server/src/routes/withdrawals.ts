@@ -38,6 +38,10 @@ router.post("/withdrawals", requireAuth, async (req, res): Promise<void> => {
   if (users.length === 0) { res.status(404).json({ error: "User not found" }); return; }
 
   const user = users[0];
+  if (!user.emailVerified) {
+    res.status(403).json({ error: "Email verification required. Please verify your email address before making a withdrawal." });
+    return;
+  }
   if (parseFloat(user.balance) < payoutAmount) {
     res.status(400).json({ error: "Insufficient balance" });
     return;

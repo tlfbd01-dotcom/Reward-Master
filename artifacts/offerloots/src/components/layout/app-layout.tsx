@@ -1,9 +1,19 @@
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup,
+  SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton,
+  SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton,
+  SidebarFooter, SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Coins, ArrowDownToLine, History, Users, Settings, Trophy, LogOut } from "lucide-react";
+import {
+  LayoutDashboard, Coins, ArrowDownToLine, History, Users, Settings,
+  Trophy, LogOut, ChevronRight, Gamepad2, Layers, ClipboardList,
+} from "lucide-react";
 import { useLogout } from "@workspace/api-client-react";
+import { useState, useEffect } from "react";
 
 const logoSrc = "/logo.png";
 
@@ -11,6 +21,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { user, logout: clearAuth } = useAuth();
   const logoutMutation = useLogout();
+  const [earnOpen, setEarnOpen] = useState(location.startsWith("/earn"));
+
+  useEffect(() => {
+    if (location.startsWith("/earn")) setEarnOpen(true);
+  }, [location]);
 
   const handleLogout = async () => {
     try {
@@ -25,13 +40,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { label: "Earn", href: "/earn", icon: Coins },
     { label: "Withdrawals", href: "/withdrawals", icon: ArrowDownToLine },
     { label: "Transactions", href: "/transactions", icon: History },
     { label: "Referrals", href: "/referrals", icon: Users },
     { label: "Leaderboard", href: "/leaderboard", icon: Trophy },
     { label: "Settings", href: "/profile", icon: Settings },
   ];
+
+  const earnSubItems = [
+    { label: "Offers", href: "/earn", icon: Gamepad2 },
+    { label: "Offerwall", href: "/earn/offerwall", icon: Layers },
+    { label: "Survey", href: "/earn/survey", icon: ClipboardList },
+  ];
+
+  const isEarnActive = location === "/earn" || location.startsWith("/earn/");
 
   return (
     <SidebarProvider>
@@ -68,10 +90,59 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <SidebarMenu>
+                  {/* Dashboard */}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location === "/dashboard"}
+                      tooltip="Dashboard"
+                    >
+                      <Link href="/dashboard" className="flex items-center gap-3 px-4 py-2 text-sm">
+                        <LayoutDashboard className="h-4 w-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  {/* Earn — collapsible sub-menu */}
+                  <Collapsible open={earnOpen} onOpenChange={setEarnOpen} className="group/earn">
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton isActive={isEarnActive} tooltip="Earn" className="flex items-center gap-3 px-4 py-2 text-sm w-full">
+                          <Coins className="h-4 w-4 shrink-0" />
+                          <span className="flex-1">Earn</span>
+                          <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]/earn:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {earnSubItems.map((item) => (
+                            <SidebarMenuSubItem key={item.href}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={
+                                  item.href === "/earn"
+                                    ? location === "/earn"
+                                    : location === item.href || location.startsWith(`${item.href}/`)
+                                }
+                              >
+                                <Link href={item.href} className="flex items-center gap-2">
+                                  <item.icon className="h-3.5 w-3.5" />
+                                  <span>{item.label}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+
+                  {/* Remaining nav items */}
                   {navItems.map((item) => (
                     <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton 
-                        asChild 
+                      <SidebarMenuButton
+                        asChild
                         isActive={location === item.href || location.startsWith(`${item.href}/`)}
                         tooltip={item.label}
                       >

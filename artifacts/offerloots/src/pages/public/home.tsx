@@ -51,6 +51,11 @@ function timeAgo(d: Date): string {
   return `${Math.floor(s / 60)}m ago`;
 }
 
+function maskUser(name: string): string {
+  if (name.length <= 2) return name[0] + "***";
+  return name.slice(0, 3) + "*".repeat(Math.min(name.length - 3, 4));
+}
+
 function LiveConversionsTicker() {
   const [entries, setEntries] = useState(() =>
     Array.from({ length: 6 }, (_, i) => generateEntry(i))
@@ -58,15 +63,21 @@ function LiveConversionsTicker() {
   const [newId, setNewId] = useState<number | null>(null);
   const counter = useRef(100);
 
-  // Add a new conversion every 2.5s
+  // Add a new conversion every 30–60s (random)
   useEffect(() => {
-    const iv = setInterval(() => {
-      const id = ++counter.current;
-      setEntries(prev => [generateEntry(id), ...prev.slice(0, 5)]);
-      setNewId(id);
-      setTimeout(() => setNewId(null), 600);
-    }, 2500);
-    return () => clearInterval(iv);
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      const delay = 30_000 + Math.random() * 30_000;
+      timer = setTimeout(() => {
+        const id = ++counter.current;
+        setEntries(prev => [generateEntry(id), ...prev.slice(0, 5)]);
+        setNewId(id);
+        setTimeout(() => setNewId(null), 600);
+        schedule();
+      }, delay);
+    };
+    schedule();
+    return () => clearTimeout(timer);
   }, []);
 
   // Update timestamps every 10s
@@ -87,7 +98,7 @@ function LiveConversionsTicker() {
         >
           <span className="text-base shrink-0">{e.flag}</span>
           <div className="flex-1 min-w-0">
-            <span className="font-bold text-sm text-foreground">{e.user}</span>
+            <span className="font-bold text-sm text-foreground">{maskUser(e.user)}</span>
             <span className="text-muted-foreground text-sm"> earned </span>
             <span className="font-bold text-primary text-sm">${e.amount.toFixed(2)}</span>
             <span className="text-muted-foreground text-sm"> from </span>

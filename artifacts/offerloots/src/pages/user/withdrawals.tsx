@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowDownToLine, Wallet, Landmark, Bitcoin, Loader2 } from "lucide-react";
+import { ArrowDownToLine, Wallet, Landmark, Bitcoin, Loader2, MailWarning } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,6 +36,8 @@ const METHODS = [
 export default function Withdrawals() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const emailVerified = (user as any)?.emailVerified !== false;
   const { data: dashboard } = useGetUserDashboard();
   const { data: withdrawalsData, isLoading: isLoadingHistory } = useGetWithdrawals();
   const createWithdrawal = useCreateWithdrawal();
@@ -88,6 +91,19 @@ export default function Withdrawals() {
           <h1 className="text-3xl font-display font-bold">Withdrawals</h1>
           <p className="text-muted-foreground">Cash out your earnings to your preferred payment method.</p>
         </div>
+
+        {!emailVerified && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+            <MailWarning className="w-5 h-5 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Email verification required</p>
+              <p className="text-xs mt-0.5 text-amber-300/80">
+                You must verify your email address before requesting a withdrawal.
+                Check your inbox for a verification link, or contact support.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">

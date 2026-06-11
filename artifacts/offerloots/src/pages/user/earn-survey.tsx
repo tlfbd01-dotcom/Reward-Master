@@ -1,18 +1,15 @@
 import { AppLayout } from "@/components/layout/app-layout";
-import { useGetOffers, useGetNetworks, useGetOffer } from "@workspace/api-client-react";
+import { useGetOffers, useGetOffer } from "@workspace/api-client-react";
 import { customFetch } from "@workspace/api-client-react/custom-fetch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
-  Gamepad2, Monitor, Smartphone, Layers, ExternalLink,
+  ClipboardList, Monitor, Smartphone, Layers, ExternalLink,
   Loader2, Globe, ShieldCheck, CheckCircle2,
 } from "lucide-react";
 import { useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-
-// ─── Color palettes ──────────────────────────────────────────────────────────
 
 const CARD_ACCENT_COLORS = [
   "border-red-500/40 hover:border-red-400/70",
@@ -42,32 +39,9 @@ const NETWORK_TAG_COLORS = [
   "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
 ];
 
-const COUNTRIES = [
-  { code: "US", label: "🇺🇸 United States" },
-  { code: "GB", label: "🇬🇧 United Kingdom" },
-  { code: "CA", label: "🇨🇦 Canada" },
-  { code: "AU", label: "🇦🇺 Australia" },
-  { code: "DE", label: "🇩🇪 Germany" },
-  { code: "FR", label: "🇫🇷 France" },
-  { code: "IN", label: "🇮🇳 India" },
-  { code: "BR", label: "🇧🇷 Brazil" },
-  { code: "NG", label: "🇳🇬 Nigeria" },
-  { code: "PH", label: "🇵🇭 Philippines" },
-  { code: "ID", label: "🇮🇩 Indonesia" },
-  { code: "MX", label: "🇲🇽 Mexico" },
-  { code: "PK", label: "🇵🇰 Pakistan" },
-  { code: "BD", label: "🇧🇩 Bangladesh" },
-  { code: "TR", label: "🇹🇷 Turkey" },
-  { code: "ZA", label: "🇿🇦 South Africa" },
-  { code: "EG", label: "🇪🇬 Egypt" },
-  { code: "AR", label: "🇦🇷 Argentina" },
-];
-
-// ─── Offer Detail Popup ───────────────────────────────────────────────────────
-
 type OfferEvent = { name: string; payout: number; eventId?: string };
 
-function OfferDetailPopup({ offerId, onClose }: { offerId: number | null; onClose: () => void }) {
+function SurveyDetailPopup({ offerId, onClose }: { offerId: number | null; onClose: () => void }) {
   const { toast } = useToast();
   const [clicking, setClicking] = useState(false);
 
@@ -82,7 +56,7 @@ function OfferDetailPopup({ offerId, onClose }: { offerId: number | null; onClos
       const result = await customFetch<{ url: string | null }>(`/api/offers/${offer.id}/click`);
       const url = result.url ?? (offer as any).offerUrl;
       if (url) { window.open(url, "_blank", "noopener,noreferrer"); onClose(); }
-      else toast({ title: "No offer URL configured" });
+      else toast({ title: "No survey URL configured" });
     } catch {
       const fallback = (offer as any).offerUrl;
       if (fallback) { window.open(fallback, "_blank", "noopener,noreferrer"); onClose(); }
@@ -104,19 +78,17 @@ function OfferDetailPopup({ offerId, onClose }: { offerId: number | null; onClos
           </div>
         ) : (
           <>
-            <div className="relative h-52 bg-gradient-to-br from-muted/60 to-muted/20 flex items-center justify-center overflow-hidden">
+            <div className="relative h-52 bg-gradient-to-br from-violet-600/20 to-muted/20 flex items-center justify-center overflow-hidden">
               {(offer as any).imageUrl ? (
                 <img src={(offer as any).imageUrl} alt={offer.name} className="max-h-full max-w-full object-contain p-6" />
               ) : (
-                <Gamepad2 className="w-20 h-20 text-muted-foreground/20" />
+                <ClipboardList className="w-20 h-20 text-muted-foreground/20" />
               )}
               <div className="absolute top-3 left-3 flex gap-2">
                 <Badge className="bg-background/90 backdrop-blur font-bold border border-white/10 text-xs px-2.5 py-1">{offer.network}</Badge>
-                {hasEvents && (
-                  <Badge variant="outline" className="bg-background/90 backdrop-blur border-primary/40 text-primary text-xs px-2 py-1">
-                    <Layers className="w-3 h-3 mr-1" />{events.length} events
-                  </Badge>
-                )}
+                <Badge variant="outline" className="bg-background/90 backdrop-blur border-violet-400/40 text-violet-400 text-xs px-2 py-1">
+                  <ClipboardList className="w-3 h-3 mr-1" /> Survey
+                </Badge>
               </div>
             </div>
             <div className="p-6 space-y-5">
@@ -124,7 +96,6 @@ function OfferDetailPopup({ offerId, onClose }: { offerId: number | null; onClos
                 <div>
                   <h2 className="text-xl font-bold leading-tight mb-1">{offer.name}</h2>
                   <div className="flex flex-wrap gap-1.5">
-                    <Badge variant="outline" className="text-xs capitalize">{offer.category}</Badge>
                     <Badge variant="outline" className="text-xs gap-1">
                       <Globe className="w-2.5 h-2.5" />
                       {(offer as any).countries?.length ? (offer as any).countries.slice(0, 3).join(", ") : "Global"}
@@ -140,28 +111,6 @@ function OfferDetailPopup({ offerId, onClose }: { offerId: number | null; onClos
                 <div className={`text-3xl font-bold shrink-0 ${payoutColor}`}>${totalPayout.toFixed(2)}</div>
               </div>
 
-              {hasEvents && (
-                <div className="rounded-xl border bg-muted/20 overflow-hidden">
-                  <div className="px-4 py-2.5 border-b bg-muted/30 flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-primary" />
-                    <span className="font-bold text-sm">Completion Events</span>
-                  </div>
-                  <div className="divide-y">
-                    {events.map((ev, i) => (
-                      <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs shrink-0">{i + 1}</div>
-                        <span className="flex-1 text-sm">{ev.name}</span>
-                        <span className={`font-bold text-sm ${payoutColor}`}>${ev.payout.toFixed(2)}</span>
-                      </div>
-                    ))}
-                    <div className="flex justify-between items-center px-4 py-2.5 bg-muted/20 font-bold text-sm">
-                      <span>Total Reward</span>
-                      <span className={payoutColor}>${totalPayout.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {(offer as any).description && (
                 <div className="space-y-1.5">
                   <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Description</h3>
@@ -170,10 +119,10 @@ function OfferDetailPopup({ offerId, onClose }: { offerId: number | null; onClos
               )}
 
               <div className="rounded-xl border bg-muted/10 p-4 space-y-2.5">
-                <h3 className="font-semibold text-sm mb-1">Important Rules</h3>
+                <h3 className="font-semibold text-sm mb-1">Survey Rules</h3>
                 <div className="flex gap-2.5 text-xs text-muted-foreground">
                   <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0 mt-0.5" />
-                  Complete all offer requirements exactly as stated.
+                  Answer all questions honestly and completely.
                 </div>
                 <div className="flex gap-2.5 text-xs text-muted-foreground">
                   <ShieldCheck className="w-3.5 h-3.5 text-green-500 shrink-0 mt-0.5" />
@@ -189,7 +138,7 @@ function OfferDetailPopup({ offerId, onClose }: { offerId: number | null; onClos
                 {clicking ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Opening…</>
                 ) : (
-                  <>Start Offer — Earn ${totalPayout.toFixed(2)}<ExternalLink className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" /></>
+                  <>Start Survey — Earn ${totalPayout.toFixed(2)}<ExternalLink className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" /></>
                 )}
               </Button>
               <p className="text-xs text-center text-muted-foreground">Opens in a new tab via {offer.network}.</p>
@@ -201,74 +150,31 @@ function OfferDetailPopup({ offerId, onClose }: { offerId: number | null; onClos
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
-
 const OFFERS_PER_PAGE = 40;
 
-export default function Earn() {
+export default function EarnSurvey() {
   const [page, setPage] = useState(1);
-  const [network, setNetwork] = useState<string>("all");
-  const [device, setDevice] = useState<string>("all");
-  const [country, setCountry] = useState<string>("all");
   const [selectedOfferId, setSelectedOfferId] = useState<number | null>(null);
 
-  const { data: networksData } = useGetNetworks();
-  const queryParams: any = { page, limit: OFFERS_PER_PAGE };
-  if (network !== "all") queryParams.network = network;
-  if (device !== "all") queryParams.device = device;
-  if (country !== "all") queryParams.country = country;
-  const { data: offersData, isLoading } = useGetOffers(queryParams);
-
+  const { data: offersData, isLoading } = useGetOffers({ page, limit: OFFERS_PER_PAGE, category: "survey" } as any);
   const totalPages = offersData ? Math.ceil(offersData.total / OFFERS_PER_PAGE) : 1;
-  const hasFilters = network !== "all" || device !== "all" || country !== "all";
 
   return (
     <AppLayout>
-      <OfferDetailPopup offerId={selectedOfferId} onClose={() => setSelectedOfferId(null)} />
+      <SurveyDetailPopup offerId={selectedOfferId} onClose={() => setSelectedOfferId(null)} />
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-display font-bold">Offers</h1>
-          <p className="text-muted-foreground">Browse individual offers and earn real cash upon completion.</p>
+          <h1 className="text-3xl font-display font-bold">Surveys</h1>
+          <p className="text-muted-foreground">Share your opinions and earn cash by completing surveys.</p>
         </div>
 
-        <div className="flex flex-wrap gap-3 items-center">
-          <Select value={network} onValueChange={(val) => { setNetwork(val); setPage(1); }}>
-            <SelectTrigger className="w-40 h-8 text-xs"><SelectValue placeholder="All Networks" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Networks</SelectItem>
-              {networksData?.map((n) => (
-                <SelectItem key={n.id} value={n.name}>{n.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={device} onValueChange={(val) => { setDevice(val); setPage(1); }}>
-            <SelectTrigger className="w-36 h-8 text-xs"><SelectValue placeholder="All Devices" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Devices</SelectItem>
-              <SelectItem value="mobile">📱 Mobile</SelectItem>
-              <SelectItem value="desktop">🖥 Desktop</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={country} onValueChange={(val) => { setCountry(val); setPage(1); }}>
-            <SelectTrigger className="w-44 h-8 text-xs"><SelectValue placeholder="All Countries" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">🌍 All Countries</SelectItem>
-              {COUNTRIES.map((c) => (
-                <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {hasFilters && (
-            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setNetwork("all"); setDevice("all"); setCountry("all"); setPage(1); }}>
-              Clear filters
-            </Button>
-          )}
-          {offersData && (
-            <span className="text-xs text-muted-foreground ml-auto">
-              {offersData.total.toLocaleString()} offers · Page {page}/{totalPages}
+        {offersData && (
+          <div className="flex justify-end">
+            <span className="text-xs text-muted-foreground">
+              {offersData.total.toLocaleString()} surveys · Page {page}/{totalPages}
             </span>
-          )}
-        </div>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
@@ -276,9 +182,9 @@ export default function Earn() {
           </div>
         ) : offersData?.data?.length === 0 ? (
           <div className="text-center py-20 bg-card rounded-xl border">
-            <Gamepad2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-bold">No offers found</h3>
-            <p className="text-muted-foreground">Try adjusting your filters.</p>
+            <ClipboardList className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-bold">No surveys available</h3>
+            <p className="text-muted-foreground">Check back soon — new surveys are added regularly.</p>
           </div>
         ) : (
           <>
@@ -288,7 +194,6 @@ export default function Earn() {
                 const payoutColor = PAYOUT_COLORS[colorIdx];
                 const accentBorder = CARD_ACCENT_COLORS[colorIdx];
                 const networkTagColor = NETWORK_TAG_COLORS[colorIdx];
-                const hasEvents = offer.events && offer.events.length > 0;
                 return (
                   <div
                     key={offer.id}
@@ -299,18 +204,13 @@ export default function Earn() {
                       {offer.imageUrl ? (
                         <img src={offer.imageUrl} alt={offer.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" loading="lazy" />
                       ) : (
-                        <Gamepad2 className="w-5 h-5 text-muted-foreground/30" />
+                        <ClipboardList className="w-5 h-5 text-muted-foreground/30" />
                       )}
                       {offer.device !== "all" && offer.device && (
                         <div className="absolute top-1 right-1">
                           {offer.device === "mobile"
                             ? <Smartphone className="w-2.5 h-2.5 text-white/70 drop-shadow" />
                             : <Monitor className="w-2.5 h-2.5 text-white/70 drop-shadow" />}
-                        </div>
-                      )}
-                      {hasEvents && (
-                        <div className="absolute top-1 left-1 bg-black/60 rounded px-1 py-0.5">
-                          <span className="text-[8px] text-white font-bold">{offer.events.length}✦</span>
                         </div>
                       )}
                     </div>
