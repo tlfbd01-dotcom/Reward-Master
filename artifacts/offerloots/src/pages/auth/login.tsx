@@ -27,10 +27,14 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const { login } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   
   const loginMutation = useLogin();
+
+  // Extract returnTo from query string
+  const params = new URLSearchParams(location.includes("?") ? location.split("?")[1] : "");
+  const returnTo = params.get("returnTo");
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -49,8 +53,11 @@ export default function Login() {
         title: "Welcome back!",
         description: "Successfully logged in.",
       });
-      
-      if (response.user.role === "admin") {
+
+      // Redirect to returnTo if present, otherwise default by role
+      if (returnTo) {
+        setLocation(decodeURIComponent(returnTo));
+      } else if (response.user.role === "admin") {
         setLocation("/admin");
       } else {
         setLocation("/dashboard");

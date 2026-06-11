@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Gamepad2, Monitor, Smartphone, Star, TrendingUp, Layers, X, ExternalLink, Loader2 } from "lucide-react";
+import { Gamepad2, Monitor, Smartphone, Star, TrendingUp, Layers, X, ExternalLink, Loader2, Zap } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -20,44 +20,83 @@ type Wall = {
 
 type OfferEvent = { name: string; payout: number; eventId?: string };
 
+// Colorful gradient palettes for walls and offer cards
+const WALL_GRADIENTS = [
+  "from-red-600 via-rose-700 to-red-900",
+  "from-orange-500 via-amber-600 to-orange-900",
+  "from-violet-600 via-purple-700 to-violet-900",
+  "from-blue-600 via-indigo-700 to-blue-900",
+  "from-emerald-500 via-teal-600 to-emerald-900",
+  "from-pink-500 via-rose-600 to-pink-900",
+  "from-yellow-500 via-amber-500 to-yellow-800",
+  "from-cyan-500 via-sky-600 to-cyan-900",
+];
+
+const CARD_ACCENT_COLORS = [
+  "border-red-500/40 hover:border-red-500/80",
+  "border-orange-500/40 hover:border-orange-500/80",
+  "border-violet-500/40 hover:border-violet-500/80",
+  "border-blue-500/40 hover:border-blue-500/80",
+  "border-emerald-500/40 hover:border-emerald-500/80",
+  "border-pink-500/40 hover:border-pink-500/80",
+  "border-yellow-500/40 hover:border-yellow-500/80",
+  "border-cyan-500/40 hover:border-cyan-500/80",
+];
+
+const PAYOUT_COLORS = [
+  "text-red-400", "text-orange-400", "text-violet-400",
+  "text-blue-400", "text-emerald-400", "text-pink-400",
+  "text-yellow-400", "text-cyan-400",
+];
+
 function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((s) => (
-        <Star key={s} className={`w-3 h-3 ${s <= Math.round(rating) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/40"}`} />
+        <Star key={s} className={`w-3 h-3 ${s <= Math.round(rating) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`} />
       ))}
       <span className="text-xs text-muted-foreground ml-1">{rating.toFixed(1)}</span>
     </div>
   );
 }
 
-function WallCard({ wall, onOpen }: { wall: Wall; onOpen: (w: Wall) => void }) {
+function WallCard({ wall, index, onOpen }: { wall: Wall; index: number; onOpen: (w: Wall) => void }) {
+  const gradient = WALL_GRADIENTS[index % WALL_GRADIENTS.length];
   return (
     <Card
-      className="hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer group"
+      className="hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer group overflow-hidden border-0"
       onClick={() => onOpen(wall)}
     >
-      <CardContent className="p-5">
-        <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center overflow-hidden shrink-0 group-hover:ring-2 group-hover:ring-primary/50 transition-all">
-            {wall.logoUrl ? (
-              <img src={wall.logoUrl} alt={wall.name} className="w-full h-full object-contain" />
-            ) : (
-              <span className="text-2xl font-bold text-primary">{wall.name[0]}</span>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-base mb-1">{wall.name}</h3>
-            <StarRating rating={wall.rating} />
-            {wall.description && (
-              <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{wall.description}</p>
-            )}
-            <div className="mt-2 flex gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><TrendingUp className="w-3 h-3" /> {wall.totalConversions} rewards</span>
-            </div>
-          </div>
-          <Button size="sm" className="shrink-0 rounded-full font-bold" onClick={(e) => { e.stopPropagation(); onOpen(wall); }}>
-            Open
+      {/* Top gradient header with logo */}
+      <div className={`bg-gradient-to-br ${gradient} p-6 flex flex-col items-center justify-center min-h-[120px] relative`}>
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_30%,white,transparent)]" />
+        <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center overflow-hidden mb-3 ring-2 ring-white/30 shadow-lg">
+          {wall.logoUrl ? (
+            <img src={wall.logoUrl} alt={wall.name} className="w-full h-full object-contain" />
+          ) : (
+            <span className="text-3xl font-bold text-white">{wall.name[0]}</span>
+          )}
+        </div>
+        <h3 className="font-bold text-white text-lg text-center drop-shadow">{wall.name}</h3>
+        <StarRating rating={wall.rating} />
+      </div>
+
+      {/* Card body */}
+      <CardContent className="p-4 space-y-3 bg-card">
+        {wall.description && (
+          <p className="text-sm text-muted-foreground line-clamp-2">{wall.description}</p>
+        )}
+        <div className="flex items-center justify-between">
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <TrendingUp className="w-3.5 h-3.5 text-primary" />
+            {wall.totalConversions.toLocaleString()} rewards paid
+          </span>
+          <Button
+            size="sm"
+            className={`rounded-full font-bold text-xs px-4 bg-gradient-to-r ${gradient} border-0 text-white hover:opacity-90`}
+            onClick={(e) => { e.stopPropagation(); onOpen(wall); }}
+          >
+            Open <Zap className="w-3 h-3 ml-1" />
           </Button>
         </div>
       </CardContent>
@@ -101,6 +140,8 @@ function WallIframeModal({ wall, onClose }: { wall: Wall; onClose: () => void })
   );
 }
 
+const OFFERS_PER_PAGE = 40; // 8 per row × 5 rows
+
 export default function Earn() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -112,7 +153,7 @@ export default function Earn() {
   const [activeWall, setActiveWall] = useState<Wall | null>(null);
 
   const { data: networksData } = useGetNetworks();
-  const queryParams: any = { page, limit: 15 };
+  const queryParams: any = { page, limit: OFFERS_PER_PAGE };
   if (network !== "all") queryParams.network = network;
   if (device !== "all") queryParams.device = device;
   const { data: offersData, isLoading } = useGetOffers(queryParams);
@@ -135,6 +176,8 @@ export default function Earn() {
     }
   };
 
+  const totalPages = offersData ? Math.ceil(offersData.total / OFFERS_PER_PAGE) : 1;
+
   return (
     <AppLayout>
       {activeWall && <WallIframeModal wall={activeWall} onClose={() => setActiveWall(null)} />}
@@ -152,6 +195,7 @@ export default function Earn() {
             </TabsTrigger>
             <TabsTrigger value="offers" className="gap-2">
               <Gamepad2 className="w-4 h-4" /> Individual Offers
+              {offersData && <Badge variant="secondary" className="text-xs px-1.5">{offersData.total.toLocaleString()}</Badge>}
             </TabsTrigger>
           </TabsList>
 
@@ -166,54 +210,50 @@ export default function Earn() {
                 <p className="text-muted-foreground">Check back soon for offerwall integrations.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {walls.map((w) => (
-                  <WallCard key={w.id} wall={w} onOpen={setActiveWall} />
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {walls.map((w, i) => (
+                  <WallCard key={w.id} wall={w} index={i} onOpen={setActiveWall} />
                 ))}
               </div>
             )}
           </TabsContent>
 
           {/* INDIVIDUAL OFFERS TAB */}
-          <TabsContent value="offers" className="mt-6 space-y-6">
-            <Card>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold uppercase text-muted-foreground mb-1 block">Network</label>
-                    <Select value={network} onValueChange={(val) => { setNetwork(val); setPage(1); }}>
-                      <SelectTrigger><SelectValue placeholder="All Networks" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Networks</SelectItem>
-                        {networksData?.map((n) => (
-                          <SelectItem key={n.id} value={n.name}>{n.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold uppercase text-muted-foreground mb-1 block">Device</label>
-                    <Select value={device} onValueChange={(val) => { setDevice(val); setPage(1); }}>
-                      <SelectTrigger><SelectValue placeholder="All Devices" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Devices</SelectItem>
-                        <SelectItem value="mobile">Mobile Only</SelectItem>
-                        <SelectItem value="desktop">Desktop Only</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-end">
-                    <Button variant="outline" className="w-full" onClick={() => { setNetwork("all"); setDevice("all"); setPage(1); }}>
-                      Clear Filters
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="offers" className="mt-6 space-y-4">
+            {/* Filters */}
+            <div className="flex flex-wrap gap-3 items-center">
+              <Select value={network} onValueChange={(val) => { setNetwork(val); setPage(1); }}>
+                <SelectTrigger className="w-40 h-8 text-xs"><SelectValue placeholder="All Networks" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Networks</SelectItem>
+                  {networksData?.map((n) => (
+                    <SelectItem key={n.id} value={n.name}>{n.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={device} onValueChange={(val) => { setDevice(val); setPage(1); }}>
+                <SelectTrigger className="w-36 h-8 text-xs"><SelectValue placeholder="All Devices" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Devices</SelectItem>
+                  <SelectItem value="mobile">Mobile</SelectItem>
+                  <SelectItem value="desktop">Desktop</SelectItem>
+                </SelectContent>
+              </Select>
+              {(network !== "all" || device !== "all") && (
+                <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setNetwork("all"); setDevice("all"); setPage(1); }}>
+                  Clear
+                </Button>
+              )}
+              {offersData && (
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {offersData.total.toLocaleString()} offers · Page {page}/{totalPages}
+                </span>
+              )}
+            </div>
 
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[...Array(8)].map((_, i) => <Card key={i} className="animate-pulse h-64 bg-muted/50" />)}
+              <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+                {[...Array(40)].map((_, i) => <div key={i} className="animate-pulse bg-muted/50 rounded-xl aspect-[3/4]" />)}
               </div>
             ) : offersData?.data?.length === 0 ? (
               <div className="text-center py-20 bg-card rounded-xl border">
@@ -223,73 +263,76 @@ export default function Earn() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                  {offersData?.data.map((offer: any) => {
+                {/* 8-per-row compact grid */}
+                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+                  {offersData?.data.map((offer: any, idx: number) => {
+                    const colorIdx = offer.id % CARD_ACCENT_COLORS.length;
+                    const payoutColor = PAYOUT_COLORS[colorIdx];
+                    const accentBorder = CARD_ACCENT_COLORS[colorIdx];
                     const hasEvents = offer.events && offer.events.length > 0;
                     return (
-                      <Card key={offer.id} className="hover:shadow-md transition-all hover:border-primary/50 group flex flex-col overflow-hidden">
-                        <Link href={`/earn/${offer.id}`} className="flex-1 flex flex-col">
-                          <div className="aspect-video bg-muted/30 relative flex items-center justify-center p-2">
-                            {offer.imageUrl ? (
-                              <img src={offer.imageUrl} alt={offer.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
-                            ) : (
-                              <Gamepad2 className="w-8 h-8 text-muted-foreground/30" />
-                            )}
-                            <div className="absolute top-1.5 left-1.5 flex flex-col gap-0.5">
-                              <Badge variant="secondary" className="bg-background/80 backdrop-blur text-[9px] px-1 py-0">{offer.network}</Badge>
-                              {hasEvents && (
-                                <Badge variant="outline" className="bg-background/80 backdrop-blur text-[9px] px-1 py-0 border-primary/50 text-primary">
-                                  {offer.events.length} events
-                                </Badge>
-                              )}
+                      <div
+                        key={offer.id}
+                        className={`group relative bg-card rounded-xl border ${accentBorder} transition-all hover:shadow-lg hover:scale-[1.03] overflow-hidden flex flex-col cursor-pointer`}
+                        onClick={() => handleOfferClick(offer.id, offer.offerUrl)}
+                      >
+                        {/* Image */}
+                        <div className="aspect-square bg-muted/30 relative overflow-hidden flex items-center justify-center">
+                          {offer.imageUrl ? (
+                            <img
+                              src={offer.imageUrl}
+                              alt={offer.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <Gamepad2 className="w-5 h-5 text-muted-foreground/30" />
+                          )}
+                          {/* Device badge */}
+                          {offer.device !== "all" && (
+                            <div className="absolute top-1 right-1">
+                              {offer.device === "mobile"
+                                ? <Smartphone className="w-2.5 h-2.5 text-white/70 drop-shadow" />
+                                : <Monitor className="w-2.5 h-2.5 text-white/70 drop-shadow" />}
                             </div>
-                            <div className="absolute bottom-1 right-1">
-                              {offer.device === "mobile" && <Smartphone className="w-3 h-3 text-muted-foreground" />}
-                              {offer.device === "desktop" && <Monitor className="w-3 h-3 text-muted-foreground" />}
+                          )}
+                          {/* Multi-event indicator */}
+                          {hasEvents && (
+                            <div className="absolute top-1 left-1 bg-black/60 rounded px-1 py-0.5">
+                              <span className="text-[8px] text-white font-bold">{offer.events.length}✦</span>
                             </div>
-                          </div>
-                          <CardContent className="p-2.5 flex-1 flex flex-col">
-                            <h3 className="font-semibold line-clamp-2 mb-1.5 flex-1 group-hover:text-primary transition-colors text-xs leading-tight">{offer.name}</h3>
-                            {hasEvents && (
-                              <div className="mb-1.5 space-y-0.5">
-                                {offer.events.slice(0, 2).map((ev: OfferEvent, i: number) => (
-                                  <div key={i} className="flex items-center justify-between text-[10px]">
-                                    <span className="text-muted-foreground line-clamp-1">{ev.name}</span>
-                                    <span className="font-bold text-primary shrink-0 ml-1">${ev.payout.toFixed(2)}</span>
-                                  </div>
-                                ))}
-                                {offer.events.length > 2 && (
-                                  <p className="text-[10px] text-muted-foreground">+{offer.events.length - 2} more</p>
-                                )}
-                              </div>
-                            )}
-                            <div className="flex items-center justify-between mt-auto pt-2 border-t">
-                              <div className="text-sm font-bold text-primary">${offer.payout.toFixed(2)}</div>
-                              {hasEvents && <div className="text-[10px] text-muted-foreground">total</div>}
-                            </div>
-                          </CardContent>
-                        </Link>
-                        <div className="px-2.5 pb-2.5">
-                          <Button
-                            size="sm"
-                            className="w-full h-7 text-xs rounded-full font-bold gap-1"
-                            onClick={() => handleOfferClick(offer.id, offer.offerUrl)}
-                          >
-                            Start <ExternalLink className="w-2.5 h-2.5" />
-                          </Button>
+                          )}
                         </div>
-                      </Card>
+
+                        {/* Info */}
+                        <div className="p-1.5 flex flex-col gap-0.5 flex-1">
+                          <p className="text-[10px] leading-tight font-medium line-clamp-2 text-foreground/90">{offer.name}</p>
+                          <div className={`text-[11px] font-bold mt-auto ${payoutColor}`}>${offer.payout.toFixed(2)}</div>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
 
-                {offersData && offersData.total > offersData.limit && (
-                  <div className="flex justify-center gap-2 mt-8">
-                    <Button variant="outline" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
-                    <div className="flex items-center px-4 font-medium">
-                      Page {page} of {Math.ceil(offersData.total / offersData.limit)}
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 pt-4">
+                    <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Prev</Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                        const p = totalPages <= 7 ? i + 1 : page <= 4 ? i + 1 : page >= totalPages - 3 ? totalPages - 6 + i : page - 3 + i;
+                        return (
+                          <button
+                            key={p}
+                            onClick={() => setPage(p)}
+                            className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${p === page ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"}`}
+                          >
+                            {p}
+                          </button>
+                        );
+                      })}
                     </div>
-                    <Button variant="outline" disabled={page >= Math.ceil(offersData.total / offersData.limit)} onClick={() => setPage(p => p + 1)}>Next</Button>
+                    <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next →</Button>
                   </div>
                 )}
               </>

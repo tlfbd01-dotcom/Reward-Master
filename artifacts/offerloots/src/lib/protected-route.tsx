@@ -10,15 +10,17 @@ export function ProtectedRoute({
   adminOnly?: boolean;
 }) {
   const { isAuthenticated, user, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      setLocation("/login");
+      // Save the current path so login can redirect back
+      const returnTo = encodeURIComponent(location);
+      setLocation(`/login?returnTo=${returnTo}`);
     } else if (!isLoading && isAuthenticated && adminOnly && user?.role !== "admin") {
       setLocation("/dashboard");
     }
-  }, [isLoading, isAuthenticated, user, adminOnly, setLocation]);
+  }, [isLoading, isAuthenticated, user, adminOnly, setLocation, location]);
 
   if (isLoading) {
     return (
